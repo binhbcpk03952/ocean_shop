@@ -1,0 +1,35 @@
+NGƯỜI DÙNG
+Các trang
+1. trang chủ ( sản phẩm, danh mục, banner, tin tức,...)
+2. trang sản phẩm ( danh mục, thương hiệu, lọc danh mục sản phẩm tìm kiếm sản phẩm
+tìm kiếm số lượng đánh giá cao hay thấp)
+3. trang giỏ hàng ( Thêm sửa xoá, thêm voucher: giảm ship và giảm %)
+4. trang tin tức ( Phải chuẩn SEO alt:"")
+5. trang đăng ký, đăng nhập, khôi phục tài khoản ( các đăng ký đăng nhập này
+nếu nhập đúng có role là admin => vào trang admin còn ngược lại là trang chủ).
+thông tin người dùng ( dùng nav xổ danh sách: Thông tin chi tiết người dùng: có cập nhật, Xem lịch sử
+đơn hàng: nếu đặt hàng rồi đang ở trạng thái chờ thì có thể huỷ đơn, còn nếu
+đơn hàng xác nhận thì không thể bỏ sau khi giao hàng thành công thì có thể
+có nút button đánh giá, mục yêu thích các sản phẩm)
+6. Trang đơn hàng chi tiết ( Form diền địa chỉ, sdt name,... thanh toán vnpay, momo, cod. Thành 
+công thì ra module thanh toán thành và có mã thanh toán ( bổ sung tính năng))
+BỔ SUNG 
+7. Trang chi tiết sản phẩm
+ADMIN 
+1. Trang sản phẩm CRUD
+- Danh mục
+- Thương hiệu
+- Màu sắc
+- Size
+2. Trang danh mục CRUD
+3. Trang Thương hiệu CRUD
+4. Trang tin tức CRUD
+5. Trang voucher CRUD
+6. Trang thống kê
+7. Trang quản lý người dùng ( Xem cập nhật quyền (role) sửa, xoá)
+8. Trang quản lý tồn kho
+9. Trang quản lý đơn hàng
+
+
+
+
