@@ -1,14 +1,24 @@
 <script setup>
-import { ref, inject, onMounted, onBeforeUnmount} from 'vue';
-import axios from 'axios';
-import { useAuthStore } from '../stores/authGlobal';
+import { ref, onMounted, onBeforeUnmount } from 'vue';
+import api from '../../axios';
 axios.defaults.withCredentials = true;
 axios.defaults.baseURL = 'http://127.0.0.1:8000/';
 
-
-const auth = useAuthStore();
 const dropdownRef = ref(null);
 const dropdown = ref(false);
+
+const user = ref(null);
+
+const loadUserData = () => {
+  const userData = localStorage.getItem('user_data');
+  if (userData) {
+    user.value = JSON.parse(userData);
+  }
+};
+
+loadUserData();
+
+
 
 const handleDropdown = () => {
     dropdown.value = !dropdown.value;
@@ -20,12 +30,27 @@ const handleClickOutside = (event) => {
 };
 
 const handleLogout = async () => {
-    try {
-        await auth.logout();
-    } catch (err) {
-        console.log('Loi khi goi API: ', err);
-    }
-}
+  try {
+    // Gọi API Đăng xuất (Axios sẽ gửi token)
+    await api.post('/logout');
+
+    // 1. XÓA TOKEN VÀ THÔNG TIN NGƯỜI DÙNG TỪ LOCAL STORAGE
+    localStorage.removeItem('auth_token');
+    localStorage.removeItem('user_data');
+
+    // 2. Chuyển hướng người dùng về trang Đăng nhập
+    // router.push('/login');
+
+    console.log('Đăng xuất thành công!');
+
+  } catch (error) {
+    console.error('Lỗi đăng xuất:', error);
+    // Vẫn nên xóa token ngay cả khi API lỗi (để người dùng có thể thử đăng nhập lại)
+    localStorage.removeItem('auth_token');
+    localStorage.removeItem('user_data');
+    // router.push('/login');
+  }
+};
 
 const show = ref(false);
 const showBox = () => {
@@ -45,9 +70,9 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-    <div class="text-end color-primary mt-1 mb-0" v-if="auth.loggedIn" >
+    <div class="text-end color-primary mt-1 mb-0" v-if="user" >
         <span class="bg-secondary text-white px-3 rounded-5">
-             Xin chào {{ auth.nameUser }}
+             Xin chào {{ user.name }}
         </span>
 
     </div>
@@ -88,11 +113,11 @@ onBeforeUnmount(() => {
                         </div>
                     </span>
                     <div class="user-login">
-                        <span class="logged-in" v-if="auth.loggedIn" @click="handleDropdown" ref="dropdownRef">
+                        <span class="logged-in" v-if="user" @click="handleDropdown" ref="dropdownRef">
                             <i class="bi bi-person fs-3"></i>
                             <div class="drop-down py-1" v-show="dropdown">
                                 <router-link to="/profile" class="nav-link p-1 ps-3">Thông tin cá nhân</router-link>
-                                <router-link to="/admin" v-if="auth.role === 'admin'" class="nav-link p-1 ps-3">Quản
+                                <router-link to="/admin" v-if="user.role === 'admin'" class="nav-link p-1 ps-3">Quản
                                     trị</router-link>
                                 <span @click="handleLogout" class="nav-link p-1 ps-3 w-100 text-danger text-left">Đăng
                                     xuất</span>
@@ -107,8 +132,6 @@ onBeforeUnmount(() => {
     <div class="box_header-click position-fixed start-0 top-0 w-100 h-100" v-if="show"
         style="background-color: rgb(0, 0, 0, 0.06);">
         <div class="bg-light w-100">
-
-
             <div class="show-category container bg-light" :class="{ 'open': show }">
                 <div class="header-items d-flex justify-content-between align-items-center">
                     <div class="logo-items">

@@ -1,35 +1,48 @@
 <script setup>
-import axios from 'axios'
-import { ref } from 'vue'
-import { useRouter } from 'vue-router'
-import { useAuthStore } from '../stores/authGlobal'
+import { reactive, ref } from 'vue';
+import api from '../axios'; // Giả sử file api.js của bạn nằm trong thư mục services
+import { useRouter } from 'vue-router';
+const router = useRouter();
+const form = reactive({
+  email: '',
+  password: '',
+});
 
-axios.defaults.withCredentials = true
-axios.defaults.baseURL = 'http://127.0.0.1:8000/'
 
-const router = useRouter()
-const auth = useAuthStore()
-const form = ref({ email: '', password: '' })
+const handleLogin = async () => {
+  try {
+    const response = await api.post('/login', {
+      email: form.email,
+      password: form.password,
+    });
 
-const login = async () => {
-    try {
-        const success = await auth.login(form.value)
-        if (success) {
-            alert('Đăng nhập thành công!')
-            router.push('/')
-        }
-    } catch (err) {
-        console.error(err)
-        alert(err.response?.data?.message || 'Sai thông tin đăng nhập!')
+      if (response.status === 200) {
+          const token = response.data.token;
+          const user = response.data.user;
+
+          localStorage.setItem('auth_token', token);
+          localStorage.setItem('user_data', JSON.stringify(user));
+
+          // Cập nhật trạng thái ứng dụng (ví dụ: dùng Vuex/Pinia)
+          // Hoặc chuyển hướng người dùng đến trang Dashboard
+          console.log('Đăng nhập thành công!', user);
+          router.push('/');
+
     }
-}
-</script>
 
+    // 1. LƯU TOKEN VÀ THÔNG TIN NGƯỜI DÙNG VÀO LOCAL STORAGE
+
+  } catch (error) {
+    console.error('Lỗi đăng nhập:', error.response.data.message);
+    alert(error.response.data.message);
+  }
+};
+</script>
 
 <template>
     <div class="container mt-5">
         <h2>Đăng nhập</h2>
-        <form @submit.prevent="login">
+        <form @submit.prevent="handleLogin">
             <div class="mb-3">
                 <label>Email:</label>
                 <input v-model="form.email" class="form-control" type="email" required />

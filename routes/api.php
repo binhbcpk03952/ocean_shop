@@ -5,8 +5,15 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\AuthController;
 
 Route::post('/register', [AuthController::class, 'register']);
-Route::post('/login', [AuthController::class, 'login']);
-Route::get('/user', [AuthController::class, 'user']);
+Route::post('login', [AuthController::class, 'login']);
 
-// Các route cần user đã đăng nhập
-Route::middleware('auth:sanctum')->post('/logout', [AuthController::class, 'logout']);
+// Route cần xác thực (Sử dụng middleware 'auth:sanctum')
+Route::middleware('auth:sanctum')->group(function () {
+    // Route Đăng xuất
+    Route::post('logout', [AuthController::class, 'logout']);
+
+    // Route Lấy thông tin người dùng
+    Route::get('user', [AuthController::class, 'user']);
+
+    // Các route API khác cần bảo vệ...
+});
