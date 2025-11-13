@@ -13,7 +13,9 @@ return new class extends Migration
     {
         Schema::create('addresses', function (Blueprint $table) {
             $table->id('address_id');
-            $table->integer('user_id');
+            $table->foreignId('user_id')
+                  ->constrained(table: 'users', column: 'user_id')
+                  ->onDelete('cascade');
             $table->string('recipient_name');
             $table->integer('recipient_phone');
             $table->string('street_address');

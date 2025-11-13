@@ -13,8 +13,12 @@ return new class extends Migration
     {
         Schema::create('promotion_categories', function (Blueprint $table) {
             $table->id('promotion_category_id');
-            $table->integer('promotion_id');
-            $table->integer('category_id');
+            $table->integer('promotion_id')
+                  ->constrained(table: 'promotions', column: 'promotion_id')
+                  ->onDelete('cascade');
+            $table->integer('category_id')
+                  ->constrained(table: 'categories', column: 'category_id')
+                  ->onDelete('cascade');
             $table->timestamps();
         });
     }

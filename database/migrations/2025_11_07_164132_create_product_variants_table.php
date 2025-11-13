@@ -13,7 +13,9 @@ return new class extends Migration
     {
         Schema::create('product_variants', function (Blueprint $table) {
             $table->id('variant_id');
-            $table->integer('product_id');
+            $table->foreignId('product_id')
+                  ->constrained(table: 'products', column: 'product_id')
+                  ->onDelete('cascade');
             $table->string('color');
             $table->string('size');
             $table->integer('stock');
