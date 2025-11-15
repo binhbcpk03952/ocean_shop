@@ -3,7 +3,7 @@ import SliderClient from '../components/client/SliderClient.vue';
 </script>
 <template>
     <SliderClient/>
-    <div class="product-list mb-5">
+    <div class="container product-list mb-5">
         <div class="text-center mt-5">
             <h2>ÁO KHOÁC GIÓ ĐA NĂNG</h2>
             <p>Trượt nước - Cản gió - Giữ ấm - Phù hợp với thời tiết!!</p>
