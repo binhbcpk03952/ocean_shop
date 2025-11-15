@@ -1,9 +1,8 @@
 <script setup>
 import SliderClient from '../components/client/SliderClient.vue';
 </script>
-
 <template>
-    <SliderClient />
+    <SliderClient/>
     <div class="product-list mb-5">
         <div class="text-center mt-5">
             <h2>ÁO KHOÁC GIÓ ĐA NĂNG</h2>
@@ -16,7 +15,7 @@ import SliderClient from '../components/client/SliderClient.vue';
                         <img src="../../../../public/images/product_demo.webp" alt="product_demo" class="w-100">
                     </div>
                     <div class="product-info">
-                        <div class="price text-danger fw-medium fs-5 mt-3" >
+                        <div class="price text-danger fw-medium fs-5 mt-3">
                             449.100đ
                         </div>
                         <div class="product-name">
@@ -37,7 +36,7 @@ import SliderClient from '../components/client/SliderClient.vue';
                         <img src="../../../../public/images/product_demo.webp" alt="product_demo" class="w-100">
                     </div>
                     <div class="product-info">
-                        <div class="price text-danger fw-medium fs-5 mt-3" >
+                        <div class="price text-danger fw-medium fs-5 mt-3">
                             449.100đ
                         </div>
                         <div class="product-name">
@@ -58,7 +57,7 @@ import SliderClient from '../components/client/SliderClient.vue';
                         <img src="../../../../public/images/product_demo.webp" alt="product_demo" class="w-100">
                     </div>
                     <div class="product-info">
-                        <div class="price text-danger fw-medium fs-5 mt-3" >
+                        <div class="price text-danger fw-medium fs-5 mt-3">
                             449.100đ
                         </div>
                         <div class="product-name">
@@ -79,7 +78,7 @@ import SliderClient from '../components/client/SliderClient.vue';
                         <img src="../../../../public/images/product_demo.webp" alt="product_demo" class="w-100">
                     </div>
                     <div class="product-info">
-                        <div class="price text-danger fw-medium fs-5 mt-3" >
+                        <div class="price text-danger fw-medium fs-5 mt-3">
                             449.100đ
                         </div>
                         <div class="product-name">
@@ -105,16 +104,21 @@ import SliderClient from '../components/client/SliderClient.vue';
     border: 1px solid rgba(0, 0, 0, 0.134);
     margin-right: 5px
 }
+
 .btn-color:nth-child(2) {
     background-color: #143c39;
 }
+
 .btn-color:nth-child(3) {
     background-color: #EC873D;
 }
+
 .btn-color:nth-child(4) {
     background-color: #c69a53;
 }
+
 .btn-color.active {
-    border: 2px solid #3497E0;;
+    border: 2px solid #3497E0;
+    ;
 }
 </style>

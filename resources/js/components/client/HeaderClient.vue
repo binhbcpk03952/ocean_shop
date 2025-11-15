@@ -76,7 +76,7 @@ onBeforeUnmount(() => {
         </span>
 
     </div>
-    <header class="py-3 position-sticky top-0 bg-light">
+    <header style="background-color: white;" class="py-3 position-sticky top-0">
         <div class="d-flex justify-content-between align-items-center">
             <nav>
                 <ul class="d-flex nav-items">
@@ -95,7 +95,7 @@ onBeforeUnmount(() => {
             </nav>
             <div class="logo">
                 <router-link to="/">
-                    <img src="../../../../public/images/logo_ocean.png" alt="Logo Ocean" width="180px">
+                    <img src="../../../../public/images/logo_ocean.png" alt="Logo Ocean" width="140px">
                 </router-link>
             </div>
             <div class="end-items d-flex justify-content-between align-items-center">
@@ -136,7 +136,7 @@ onBeforeUnmount(() => {
                 <div class="header-items d-flex justify-content-between align-items-center">
                     <div class="logo-items">
                         <router-link to="/">
-                            <img src="../../../../public/images/logo_ocean.png" alt="logo ocean" width="160px">
+                            <img src="../../../../public/images/logo_ocean.png" alt="logo ocean" width="140px">
                         </router-link>
                     </div>
                     <div class="search-items">

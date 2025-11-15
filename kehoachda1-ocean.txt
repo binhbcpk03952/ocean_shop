@@ -23,11 +23,10 @@ ADMIN
 - Size
 2. Trang danh mục CRUD
 3. Trang Thương hiệu CRUD
-4. Trang tin tức CRUD
+4. Trang bài viết CRUD
 5. Trang voucher CRUD
 6. Trang thống kê
-7. Trang quản lý người dùng ( Xem cập nhật quyền (role) sửa, xoá)
-8. Trang quản lý tồn kho
+7. Trang quản lý người dùng ( Xem cập nhật quyền (role) khóa tài khoản)
 9. Trang quản lý đơn hàng
 
 

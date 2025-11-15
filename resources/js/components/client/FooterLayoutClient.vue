@@ -1,8 +1,7 @@
-<script setup></script>
+<script setup>
+</script>
 <template>
     <div class="div py-5" style="background-color: #0A3D62; color: white;">
-
-
         <div class="container">
             <footer class="row">
                 <div class="logo">
@@ -29,32 +28,33 @@
                 <div class="col-md-4">
                     <h3>Kết nối</h3>
                     <div class="icon">
-                        <span class="me-3">
+                        <a href="#" class="me-3">
                             <i class="bi bi-facebook"></i>
-                        </span>
-                        <span class="me-3">
+                        </a>
+                        <a href="#" class="me-3">
                             <i class="bi bi-instagram"></i>
-                        </span>
-                        <span class="me-2">
+                        </a>
+                        <a href="#" class="me-2">
                             <i class="bi bi-tiktok"></i>
-                        </span>
-                        <span class="me-3">
+                        </a>
+                        <a href="#" class="me-3">
                             Zalo
-                        </span>
+                        </a>
                     </div>
                     <div class="contact-me">
                         <form @submit.prevent="handleContactMe">
                             <div class="input_value mt-2 d-flex align-items-center ">
-                                <input type="email" name="email" id="email" class="me-1 py-1 px-3 rounded-2" placeholder="Nhập email của bạn">
+                                <input type="email" name="email" id="email" class="me-1 py-1 px-2 rounded-2"
+                                    placeholder="Nhập email của bạn">
                                 <button class="btn py-1 px-3 btn-outline-primary">Gửi</button>
                             </div>
                         </form>
                     </div>
                 </div>
-                <hr>
+                <hr style="margin: 20px 0px;">
                 <div class="d-flex justify-content-between align-items-center">
                     <div class="info">
-                        <div class="h4">© CÔNG TY CỔ PHẦN THỜI TRANG OCEAN</div>
+                        <div class="h7">© CÔNG TY CỔ PHẦN THỜI TRANG OCEAN</div>
                         <small>Bản quyền thuộc về của chúng tôi!!</small>
                     </div>
                     <div class="image_logo d-flex align-items-center">
@@ -67,11 +67,51 @@
     </div>
 </template>
 <style scoped>
-    #email {
-        border: 1px solid #111;
-    }
-    #email:focus {
-        outline: none;
-        border: 1px solid #3497E0;
-    }
+header {
+    font-family: 'Times New Roman', Times, serif;
+}
+
+#email {
+    border: 1px solid #111;
+}
+
+#email:focus {
+    outline: none;
+    border: 1px solid #3497E0;
+}
+
+h3 {
+    font-size: 1.2rem;
+    margin-top: 20px;
+}
+
+p {
+    font-size: 0.9rem;
+}
+
+ul li {
+    font-size: 0.9rem;
+}
+
+div.logo {
+    padding: 0;
+}
+
+img {
+    width: 150px;
+}
+
+div.icon {
+    font-size: 1.4rem;
+}
+
+div.icon a {
+    color: white;
+    text-decoration: none;
+    font-weight: 300;
+}
+div.icon a:hover {
+    transition: 0.3s;
+    opacity: 0.5;
+}
 </style>
