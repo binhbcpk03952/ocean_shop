@@ -48,8 +48,8 @@ const register = async () => {
 </script>
 <template>
     <div class="container mt-5">
-        <h2>Đăng ký</h2>
         <form @submit.prevent="register">
+            <h2>Đăng ký</h2>
             <div class="mb-3">
                 <label>Tên:</label>
                 <input v-model="form.name" class="form-control" required />
@@ -67,9 +67,19 @@ const register = async () => {
                 <input v-model="form.password_confirmation" type="password" class="form-control" required />
             </div>
             <button class="btn btn-success">Đăng ký</button>
+            <div class="text-end">
+                <span>Bạn đã có tài khoản? <router-link to="/login">Đăng nhập</router-link></span>
+            </div>
         </form>
-        <div class="text-end">
-            <span>Bạn đã có tài khoản? <router-link to="/login">Đăng nhập</router-link></span>
-        </div>
     </div>
 </template>
+<style scoped>
+form {
+  width: 50%;
+  margin: 0px auto;
+  margin-bottom: 201px;
+  margin-top: 105px;
+  box-shadow: 1px 2px 3px #0001;
+  padding: 50px;
+}
+</style>
