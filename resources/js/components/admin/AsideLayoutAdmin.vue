@@ -15,7 +15,9 @@ const isActive = (path) => {
                 <li class="mt-4">
                     <router-link to="/admin"  class="text-white text-decoration-none" :class="{ activepage: isActive('/admin') }">Dashboard</router-link>
                 </li>
-                <li class="mt-4">Sản phẩm</li>
+                <li class="mt-4">
+                    <router-link to="/admin/products"  class="text-white text-decoration-none" :class="{ activepage: isActive('/admin/products') }">Sản phẩm</router-link>
+                </li>
                 <li class="mt-4">Thương hiệu</li>
                 <li class="mt-4">
                     <router-link to="/admin/categories" class="text-white text-decoration-none" :class="{ activepage: isActive('/admin/categories') }">Danh
