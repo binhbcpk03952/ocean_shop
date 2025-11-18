@@ -1,9 +1,8 @@
 <script setup>
 import { onMounted, reactive, ref, watch } from "vue";
 import { useRouter, useRoute } from "vue-router";
-import axios from "axios";
 import api from "../axios";
-// import ProductDetail from "./ProductDetail.vue";
+import ProductDetail from "../components/admin/ProductDetail.vue";
 
 const HOST = import.meta.env.VITE_URL_API;
 const router = useRouter();
@@ -40,8 +39,8 @@ const fetchProducts = async () => {
         if (category) params.append('category', category);
         if (search) params.append('search', search);
 
-        const url = `${HOST}/listProduct.php${params.toString() ? '?' + params.toString() : ''}`;
-        const { data, status } = await axios.get(url);
+        const url = `products${params.toString() ? '?' + params.toString() : ''}`;
+        const { data, status } = await api.get(url);
         if (status === 200) {
             products.list = data;
         }
@@ -51,7 +50,8 @@ const fetchProducts = async () => {
 };
 const category = async () => { // danh mục
     try {
-        const response = await axios.get(`${HOST}/catgory.php`);
+        const response = await api.get(`categories`);
+        // console.log(`);
         // console.log(response.data);
         categoryFillter.items = response.data;
     } catch (error) {
@@ -155,7 +155,7 @@ watch(() => route.query,
                         <td>{{ prod.name }}</td>
                         <td class="text-end">{{ formatCurrency(prod.price) }}</td>
                         <td class="text-center"><span class="bg-success text-white rounded px-1 small">{{
-                            prod.category_name
+                            prod.categories.name
                         }}</span></td>
                         <td>{{ formatDate(prod.created_at) }}</td>
                         <td>

@@ -8,7 +8,7 @@ class ProductImage extends Model
 {
     protected $table = 'product_images';
     protected $primaryKey = 'image_id';
-    protected $fillable = ['image_url', 'variant_id'];
+    protected $fillable = ['image_url', 'variant_id', 'is_main'];
     public function variant()
     {
         return $this->belongsTo(ProductVariant::class, 'variant_id', 'variant_id');

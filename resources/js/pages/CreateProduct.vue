@@ -53,7 +53,7 @@ const product = reactive({
     imagePreviews: [],
     variants: [
         {
-            color: '',
+            color: '#000000',
             images: [], imagePreview: [],
             sizes: [{ size: '', stock: 0, price: 0 }],
         },
@@ -108,18 +108,22 @@ const handleAddProduct = async () => {
     }
 
 
-    // try {
-    //     const response = await api.post(`/products`, formData);
+    try {
+        const response = await api.post(`/products`, formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data'
+            }
+        });
 
-    //     if (response.data.status === true) {
-    //         alert(response.data.message);
-    //         router.push('/admin/products');
-    //     } else {
-    //         console.log(response.data.message);
-    //     }
-    // } catch (err) {
-    //     console.error('Lỗi khi gọi API: ' + err);
-    // }
+        if (response.data.status === true) {
+            alert(response.data.message);
+            router.push('/admin/products');
+        } else {
+            console.log(response.data.message);
+        }
+    } catch (err) {
+        console.error('Lỗi khi gọi API: ' + err);
+    }
 };
 </script>
 

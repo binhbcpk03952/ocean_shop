@@ -8,7 +8,7 @@ class ProductVariant extends Model
 {
     protected $table = 'product_variants';
     protected $primaryKey = 'variant_id';
-    protected $fillable = ['color', 'size', 'price'];
+    protected $fillable = ['color', 'size', 'price', 'stock', 'product_id'];
     public function product()
     {
         return $this->belongsTo(Product::class, 'product_id', 'product_id');

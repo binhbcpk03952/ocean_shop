@@ -17,7 +17,7 @@ return new class extends Migration
             $table->string('name');
             $table->string('description');
             $table->integer('price');
-            $table->string('category_id');
+            $table->integer('category_id')->index();
             $table->string('is_variant');
             $table->timestamps();
         });
