@@ -1,7 +1,6 @@
 import { createRouter, createWebHistory } from "vue-router";
 import AdminLayout from "../layouts/AdminLayout.vue";
 import ClientLayout from "../layouts/ClientLayout.vue";
-
 const routes = [
     {
         path: '/',
@@ -11,6 +10,24 @@ const routes = [
                 path: '',
                 name: 'home',
                 component: () => import('../pages/HomeView.vue')
+            },
+            // San pham
+            {
+                path: '/product',
+                name: 'product',
+                component: () => import('../pages/Product.vue')
+            },
+            // Tin tuc
+            {
+                path: '/blog',
+                name: 'blog',
+                component: () => import('../pages/Blog.vue')
+            },
+            // Store
+            {
+                path: '/store',
+                name: 'store',
+                component: () => import('../pages/Store.vue')
             },
             {
                 path: '/login',

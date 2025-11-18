@@ -84,16 +84,16 @@ onBeforeUnmount(() => {
                 <nav>
                     <ul class="d-flex nav-items">
                         <li style="cursor: pointer;">
-                            <span @click="showBox">
-                                Thời trang <i class="bi bi-chevron-down"></i>
-                            </span>
+                            <router-link class="nav-link" to="/product">
+                                Thời trang <i  @click="showBox" class="bi bi-chevron-down"></i>
+                            </router-link>
                         </li>
                         <li>
-                            <span>Ưu đãi <i class="bi bi-chevron-down"></i></span>
+                            <router-link class="nav-link">Ưu đãi</router-link>
                         </li>
-                        <li><span>Đồng phục</span></li>
-                        <li><span>Cửa hàng</span></li>
-                        <li><span>Tin tức</span></li>
+                        <li><router-link class="nav-link">Đồng phục</router-link></li>
+                        <li><router-link to="/store" class="nav-link">Cửa hàng</router-link></li>
+                        <li><router-link to="/blog" class="nav-link">Tin tức</router-link></li>
                     </ul>
                 </nav>
                 <div class="logo">

@@ -4,7 +4,97 @@ import SliderClient from '../components/client/SliderClient.vue';
 <template>
     <SliderClient/>
     <div class="container product-list mb-5">
-        <div class="text-center mt-5">
+        <div class="text-center mt-5 item">
+            <h2>ÁO KHOÁC GIÓ ĐA NĂNG</h2>
+            <p>Trượt nước - Cản gió - Giữ ấm - Phù hợp với thời tiết!!</p>
+        </div>
+        <div class="row">
+            <div class="col-md-3">
+                <div class="product-item">
+                    <div class="product-img">
+                        <img src="../../../../public/images/product_demo.webp" alt="product_demo" class="w-100">
+                    </div>
+                    <div class="product-info">
+                        <div class="price text-danger fw-medium fs-5 mt-3">
+                            449.100đ
+                        </div>
+                        <div class="product-name">
+                            Áo Khoác Gió Nữ Gia Đinh 3C Promax
+                        </div>
+                    </div>
+                    <div class="variant-colors d-flex  align-items-center">
+                        <button class="btn-color"></button>
+                        <button class="btn-color"></button>
+                        <button class="btn-color"></button>
+                        <button class="btn-color active"></button>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="product-item">
+                    <div class="product-img">
+                        <img src="../../../../public/images/product_demo.webp" alt="product_demo" class="w-100">
+                    </div>
+                    <div class="product-info">
+                        <div class="price text-danger fw-medium fs-5 mt-3">
+                            449.100đ
+                        </div>
+                        <div class="product-name">
+                            Áo Khoác Gió Nữ Gia Đinh 3C Promax
+                        </div>
+                    </div>
+                    <div class="variant-colors d-flex  align-items-center">
+                        <button class="btn-color"></button>
+                        <button class="btn-color"></button>
+                        <button class ="btn-color"></button>
+                        <button class="btn-color active"></button>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="product-item">
+                    <div class="product-img">
+                        <img src="../../../../public/images/product_demo.webp" alt="product_demo" class="w-100">
+                    </div>
+                    <div class="product-info">
+                        <div class="price text-danger fw-medium fs-5 mt-3">
+                            449.100đ
+                        </div>
+                        <div class="product-name">
+                            Áo Khoác Gió Nữ Gia Đinh 3C Promax
+                        </div>
+                    </div>
+                    <div class="variant-colors d-flex  align-items-center">
+                        <button class="btn-color"></button>
+                        <button class="btn-color"></button>
+                        <button class="btn-color"></button>
+                        <button class="btn-color active"></button>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="product-item">
+                    <div class="product-img">
+                        <img src="../../../../public/images/product_demo.webp" alt="product_demo" class="w-100">
+                    </div>
+                    <div class="product-info">
+                        <div class="price text-danger fw-medium fs-5 mt-3">
+                            449.100đ
+                        </div>
+                        <div class="product-name">
+                            Áo Khoác Gió Nữ Gia Đinh 3C Promax
+                        </div>
+                    </div>
+                    <div class="variant-colors d-flex  align-items-center">
+                        <button class="btn-color"></button>
+                        <button class="btn-color"></button>
+                        <button class="btn-color"></button>
+                        <button class="btn-color active"></button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="text-center mt-5 item">
             <h2>ÁO KHOÁC GIÓ ĐA NĂNG</h2>
             <p>Trượt nước - Cản gió - Giữ ấm - Phù hợp với thời tiết!!</p>
         </div>
@@ -120,5 +210,8 @@ import SliderClient from '../components/client/SliderClient.vue';
 .btn-color.active {
     border: 2px solid #3497E0;
     ;
+}
+div.item{
+    margin: 20px 50px 0px 0px;
 }
 </style>

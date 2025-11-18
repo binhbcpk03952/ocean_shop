@@ -37,7 +37,7 @@
                         <a href="#" class="me-2">
                             <i class="bi bi-tiktok"></i>
                         </a>
-                        <a href="#" class="me-3">
+                        <a href="#" class="me-4">
                             Zalo
                         </a>
                     </div>
