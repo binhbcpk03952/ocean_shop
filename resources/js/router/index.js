@@ -38,7 +38,22 @@ const routes = [
                 path: '/register',
                 name: 'register',
                 component: () => import('../pages/Register.vue')
-            }
+            },
+            {
+                path: '/products',
+                name: 'products',
+                component: () => import('../pages/ProductsListClient.vue')
+            },
+            {
+                path: '/products/:id',
+                name: 'product_detail',
+                component: () => import('../pages/ProductDetailClient.vue')
+            },
+             {
+                path: '/carts',
+                name: 'carts',
+                component: () => import('../pages/CartListClient.vue')
+            },
 
         ]
     },
