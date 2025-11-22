@@ -5,6 +5,12 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\ProductController;
+use App\Http\Controllers\Api\PostController;
+use App\Http\Controllers\Api\CartController;
+use App\Http\Controllers\Api\BannerController;
+
+
+
 
 
 // Route đăng ký
@@ -26,8 +32,21 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('categories', [CategoryController::class, 'index']);
     Route::post('categories', [CategoryController::class, 'store']);
 
+    // Route cho Giỏ hàng
+    Route::post('products', [ProductController::class, 'store']);
+    Route::post('cart', [\App\Http\Controllers\Api\CartController::class, 'store']);
+    Route::post('carts', [CartController::class, 'store']);
+    Route::get('carts', [CartController::class, 'index']);
 
+    Route::post('posts', [PostController::class, 'store']);
+    Route::get('posts', [PostController::class, 'index']);
+    Route::get('posts/{id}', [PostController::class, 'show']);
+    Route::delete('posts/{id}', [PostController::class, 'destroy']);
+
+    Route::post('banners', [BannerController::class, 'store']);
+    Route::put('banners/{id}', [BannerController::class, 'update']);
+    Route::delete('banners/{id}', [BannerController::class, 'destroy']);
 });
+Route::get('banners', [BannerController::class, 'index']);
 Route::get('products', [ProductController::class, 'index']);
-Route::post('products', [ProductController::class, 'store']);
 Route::get('products/{id}', [ProductController::class, 'show']);

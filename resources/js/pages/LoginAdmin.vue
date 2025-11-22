@@ -1,70 +1,82 @@
 <script setup>
-import { reactive, ref } from 'vue';
-import api from '../axios'; // Giả sử file api.js của bạn nằm trong thư mục services
+import { reactive, inject } from 'vue';
+import api from '../axios';
 import { useRouter } from 'vue-router';
+
 const router = useRouter();
+const authStore = inject('auth')
+const auth = authStore.auth
+const checkLogin = authStore.checkLogin
+
 const form = reactive({
-  email: '',
-  password: '',
+    email: '',
+    password: '',
 });
 
-
 const handleLogin = async () => {
-  try {
-    const response = await api.post('/login', {
-      email: form.email,
-      password: form.password,
-    });
+    try {
+        const res = await api.post('/login', {
+            email: form.email,
+            password: form.password,
+        });
 
-    if (response.status === 200) {
-      const token = response.data.token;
-      const user = response.data.user;
+        if (res.status === 200) {
 
-      localStorage.setItem('auth_token', token);
-      localStorage.setItem('user_data', JSON.stringify(user));
+            // ⭐ Cập nhật auth ngay tại chỗ
+            auth.loggedIn = true
+            auth.user = res.data.user.name   // dùng user, không phải name
+            auth.role = res.data.user.role
+            auth.token = res.data.token
 
-      // Cập nhật trạng thái ứng dụng (ví dụ: dùng Vuex/Pinia)
-      // Hoặc chuyển hướng người dùng đến trang Dashboard
-      console.log('Đăng nhập thành công!', user);
-      router.push('/');
+            // ⭐ Lưu vào localStorage để Header load được
+            localStorage.setItem('auth_token', res.data.token)
+            localStorage.setItem('user_data', JSON.stringify({
+                name: res.data.user.name,
+                role: res.data.user.role
+            }))
 
+            // ⭐ Đồng bộ trạng thái với server (không bắt buộc)
+            await checkLogin()
+
+            console.log("Đăng nhập thành công!", auth)
+
+            router.push('/')
+        }
+
+    } catch (error) {
+        console.error('Lỗi đăng nhập:', error.response?.data?.message);
+        alert(error.response?.data?.message || "Lỗi đăng nhập!");
     }
-
-    // 1. LƯU TOKEN VÀ THÔNG TIN NGƯỜI DÙNG VÀO LOCAL STORAGE
-
-  } catch (error) {
-    console.error('Lỗi đăng nhập:', error.response.data.message);
-    alert(error.response.data.message);
-  }
 };
 </script>
 
+
 <template>
-  <div class="container mt-5">
-    <form @submit.prevent="handleLogin">
-      <h2>Đăng nhập</h2>
-      <div class="mb-3">
-        <label>Email:</label>
-        <input v-model="form.email" class="form-control" type="email" required />
-      </div>
-      <div class="mb-3">
-        <label>Mật khẩu:</label>
-        <input v-model="form.password" class="form-control" type="password" required />
-      </div>
-      <button class="btn btn-primary">Đăng nhập</button>
-      <div class="text-end">
-        <span>Bạn chưa có tài khoản? <router-link to="/register">Đăng ký</router-link></span>
-      </div>
-    </form>
-  </div>
+    <div class="container mt-5">
+        <form @submit.prevent="handleLogin">
+            <h2>Đăng nhập</h2>
+            <div class="mb-3">
+                <label>Email:</label>
+                <input v-model="form.email" class="form-control" type="email" required />
+            </div>
+            <div class="mb-3">
+                <label>Mật khẩu:</label>
+                <input v-model="form.password" class="form-control" type="password" required />
+            </div>
+            <button class="btn btn-primary">Đăng nhập</button>
+            <div class="text-end">
+                <span>Bạn chưa có tài khoản? <router-link to="/register">Đăng ký</router-link></span>
+            </div>
+        </form>
+    </div>
 </template>
 <style scoped>
 form {
-  width: 50%;
-  margin: 0px auto;
-  margin-bottom: 201px;
-  margin-top: 105px;
-  box-shadow: 1px 2px 3px #0001;
-  padding: 50px;
+    width: 50%;
+    margin: 0px auto;
+    margin-bottom: 201px;
+    margin-top: 105px;
+    box-shadow: 1px 2px 3px #0001;
+    padding: 50px;
 }
 </style>

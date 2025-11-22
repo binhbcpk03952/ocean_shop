@@ -3,8 +3,6 @@ import { onMounted, reactive, ref, watch } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import api from "../axios";
 import ProductDetail from "../components/admin/ProductDetail.vue";
-
-const HOST = import.meta.env.VITE_URL_API;
 const router = useRouter();
 const route = useRoute();
 const products = reactive({

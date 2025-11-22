@@ -24,7 +24,9 @@ const isActive = (path) => {
                         mục</router-link>
                 </li>
                 <li class="mt-4">Voucher</li>
-                <li class="mt-4">Bài viết</li>
+                <li class="mt-4">
+                   <router-link to="/admin/posts" class="text-white text-decoration-none" :class="{ activepage: isActive('/admin/categories') }">Bài viết</router-link>
+                </li>
                 <li class="mt-4">Banner</li>
                 <li class="mt-4">Hoá đơn</li>
                 <li class="mt-4">Tài khoản</li>

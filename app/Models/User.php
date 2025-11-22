@@ -63,4 +63,12 @@ class User extends Authenticatable
     {
         return $this->hasMany(Order::class, 'user_id', 'user_id');
     }
+    public function post()
+    {
+        return $this->hasMany(Post::class, 'user_id', 'user_id');
+    }
+    public function banner()
+    {
+        return $this->hasMany(Banner::class, 'user_id', 'user_id');
+    }
 }

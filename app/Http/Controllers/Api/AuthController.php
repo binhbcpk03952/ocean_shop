@@ -42,7 +42,7 @@ class AuthController extends Controller
         // 3. Kiểm tra người dùng và mật khẩu
         if (!$user || !Hash::check($request->password, $user->password)) {
             return response()->json([
-                'message' => 'Thông tin đăng nhập không hợp lệ.'
+                'message' => 'Thông tin đăng nhập không hợp lệ.',
             ], 401);
         }
 

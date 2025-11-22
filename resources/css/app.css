@@ -11,3 +11,24 @@
     font-family: "Inter", sans-serif;
     font-optical-sizing: auto;
 }
+/* Tùy chỉnh màu sắc và kích thước chung cho cả hai nút */
+.swiper-button-prev,
+.swiper-button-next {
+    width: 30px !important;
+    height: 30px !important;
+    color: rgb(14, 0, 0);
+    z-index: 1;
+}
+.swiper-button-prev:after,
+.swiper-button-next:after {
+    font-size: 20px !important;
+}
+
+
+.swiper-button-prev {
+    left: 20px;
+}
+
+.swiper-button-next {
+    right: 20px;
+}

@@ -23,6 +23,12 @@ const routes = [
                 name: 'blog',
                 component: () => import('../pages/Blog.vue')
             },
+            //
+            {
+                path: '/blog/:id',
+                name: 'blog_detail',
+                component: () => import('../pages/BlogDetail.vue')
+            },
             // Store
             {
                 path: '/store',
@@ -38,6 +44,21 @@ const routes = [
                 path: '/register',
                 name: 'register',
                 component: () => import('../pages/Register.vue')
+            },
+            {
+                path: '/products',
+                name: 'products',
+                component: () => import('../pages/ProductsListClient.vue')
+            },
+            {
+                path: '/products/:id',
+                name: 'product_detail',
+                component: () => import('../pages/ProductDetailClient.vue')
+            },
+             {
+                path: '/carts',
+                name: 'carts',
+                component: () => import('../pages/CartListClient.vue')
             }
 
         ]
@@ -65,7 +86,22 @@ const routes = [
                 path: 'create_product',
                 name: 'admin_create_product',
                 component: () => import('../pages/CreateProduct.vue')
-            }
+            },
+            {
+                path: 'posts',
+                name: 'admin_posts',
+                component: () => import('../pages/PostListAdmin.vue')
+            },
+            {
+                path: 'add_post',
+                name: 'admin_add_post',
+                component: () => import('../pages/AddPostAdmin.vue')
+            },
+            {
+                path: 'add_banner',
+                name: 'admin_add_banner',
+                component: () => import('../pages/AddBannerAdmin.vue')
+            },
         ],
     }
 ];
