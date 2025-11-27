@@ -1,9 +1,18 @@
 <script setup>
-import { ref, onMounted, watch, reactive, computed } from 'vue';
-import { useRoute } from 'vue-router';
-import api from '../axios';
+import { ref, onMounted, watch, reactive, computed, inject } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
+
+import api from '../../axios';
 const route = useRoute();
+const router = useRouter();
 const stockVariant = ref(null);
+const { auth } = inject('auth')
+
+
+// console.log(auth);
+const productId = ref(route.params.id)
+// console.log(route.query);
+
 
 
 // API trả về sản phẩm và các mảng biến thể/hình ảnh lồng nhau
@@ -147,6 +156,10 @@ const handleAddToCart = async () => {
     }
     console.log('dữ liệu gửi lên: ', cartValue);
 
+    if (!auth.loggedIn) {
+        router.push('/login?back=products/' + productId.value);
+        return;
+    }
     try {
         const res = await api.post('carts', cartValue);
         if (res.status === 200) {
@@ -159,7 +172,6 @@ const handleAddToCart = async () => {
         console.error('Lỗi khi thêm sản phẩm vào giỏ hàng:', err);
 
     }
-
 }
 
 
@@ -223,7 +235,8 @@ const handleAddToCart = async () => {
                             </div>
                         </div>
                         <div class="col-md-8">
-                            <button class="btn btn-primary rounded-4 w-100 py-2" @click="handleAddToCart">Thêm vào giỏ hàng</button>
+                            <button class="btn btn-primary rounded-4 w-100 py-2" @click="handleAddToCart">Thêm vào giỏ
+                                hàng</button>
                         </div>
                     </div>
                 </div>

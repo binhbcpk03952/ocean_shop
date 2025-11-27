@@ -1,6 +1,6 @@
 <script setup>
 import { useRoute } from 'vue-router';
-import api from '../axios';
+import api from '../../axios';
 import { ref, onMounted, watch } from 'vue';
 
 const route = useRoute()
@@ -52,7 +52,9 @@ onMounted(() => {
 .post-desc :deep(img) {
     max-width: 100%;
     height: auto;
-    border-radius: 8px; /* Thêm bo tròn nhẹ cho hình ảnh */
-    margin: 1rem 0; /* Thêm khoảng cách trên và dưới cho hình ảnh */
+    border-radius: 8px;
+    /* Thêm bo tròn nhẹ cho hình ảnh */
+    margin: 1rem 0;
+    /* Thêm khoảng cách trên và dưới cho hình ảnh */
 }
 </style>

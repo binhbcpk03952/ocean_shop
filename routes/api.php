@@ -25,18 +25,23 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Route Lấy thông tin người dùng
     Route::get('user', [AuthController::class, 'user']);
+    Route::get('users', [AuthController::class, 'users']);
+    Route::put('users/{id}', [AuthController::class, 'update']);
+    Route::delete('users/{id}', [AuthController::class, 'destroy']);
 
 
     // route thêm danh mục
     // route danh sách danh mục
     Route::get('categories', [CategoryController::class, 'index']);
     Route::post('categories', [CategoryController::class, 'store']);
+    Route::delete('categories/{id}', [CategoryController::class, 'destroy']);
 
     // Route cho Giỏ hàng
     Route::post('products', [ProductController::class, 'store']);
-    Route::post('cart', [\App\Http\Controllers\Api\CartController::class, 'store']);
+    // Route::post('cart', [CartController::class, 'store']);
     Route::post('carts', [CartController::class, 'store']);
     Route::get('carts', [CartController::class, 'index']);
+    Route::put('carts/{id}', [CartController::class, 'updateQuantity']);
 
     Route::post('posts', [PostController::class, 'store']);
     Route::get('posts', [PostController::class, 'index']);

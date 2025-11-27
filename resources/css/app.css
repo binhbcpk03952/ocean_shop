@@ -7,6 +7,9 @@
 @import "bootstrap-icons/font/bootstrap-icons.css";
 
 @import url("https://fonts.googleapis.com/css2?family=Instrument+Sans:ital,wght@0,400..700;1,400..700&family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Manrope:wght@200..800&display=swap");
+:root {
+    --color: #3497E0;
+}
 * {
     font-family: "Inter", sans-serif;
     font-optical-sizing: auto;
@@ -31,4 +34,10 @@
 
 .swiper-button-next {
     right: 20px;
+}
+.color-main {
+    color: var(--color) !important;
+}
+.bg-main {
+    background-color: var(--color) !important;
 }

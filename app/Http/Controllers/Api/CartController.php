@@ -54,4 +54,55 @@ class CartController extends Controller
         // 5. Trả về thông báo thành công
         return response()->json(['message' => 'Sản phẩm đã được thêm vào giỏ hàng thành công!'], 200);
     }
+    public function updateQuantity(Request $request, $id)
+    {
+        // 1. Validate dữ liệu
+        $request->validate([
+            'quantity' => 'required|integer|min:1',
+        ]);
+
+        // 2. Tìm CartItem theo ID
+        $cartItem = CartItem::find($id);
+
+        if (!$cartItem) {
+            return response()->json(['message' => 'Sản phẩm không tồn tại trong giỏ hàng'], 404);
+        }
+
+        // 3. Kiểm tra quyền sở hữu (CartItem thuộc về user hiện tại)
+        $user_id = $request->user()->user_id;
+        $cart = Cart::find($cartItem->cart_id);
+
+        if ($cart->user_id !== $user_id) {
+            return response()->json(['message' => 'Không có quyền cập nhật giỏ hàng này'], 403);
+        }
+
+        // 4. Cập nhật số lượng
+        $cartItem->quantity = $request->quantity;
+        $cartItem->save();
+
+        return response()->json([
+            'message' => 'Cập nhật số lượng thành công!',
+            'status' => true,
+            'cartItem' => $cartItem
+        ], 200);
+    }
+    public function updateVariant(Request $request, $id) {
+        $request -> validate([
+            'variant_id' => 'required|exists:product_variants,variant_id',
+        ]);
+
+        $cartItem = Cart::find($id);
+        if (!$cartItem) {
+            return response()->json(['message' => 'Sản phẩm không tồn tại trong giỏ hàng'], 404);
+        }
+        $user_id = $request->user()->user_id;
+        $cart = Cart::find($cartItem->cart_id);
+
+        if ($cart->user_id !== $user_id) {
+            return response()->json(['message' => 'Không có quyền cập nhật giỏ hàng này'], 403);
+        }
+
+        $cartItem->variant_id = $request->variant_id;
+
+    }
 }

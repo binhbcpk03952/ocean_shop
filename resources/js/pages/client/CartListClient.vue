@@ -1,8 +1,12 @@
 <script setup>
-import { ref, reactive, onMounted, computed } from 'vue';
-import api from '../axios';
+import { ref, reactive, onMounted, computed, watch } from 'vue';
+import api from '../../axios';
 
 const carts = ref([])
+const loadingItemIds = ref(new Set()); // Track which items are loading
+const productsSelected = ref([]);
+const productsSelectedAll = ref(false)
+
 const handleFetchCarts = async () => {
     try {
         const response = await api.get('/carts')
@@ -15,25 +19,102 @@ const handleFetchCarts = async () => {
         console.error('Lỗi khi lấy danh sách sản phẩm:', error)
     }
 }
+
 onMounted(() => {
     handleFetchCarts()
 })
 
-const handleIncreaseQuantity = (item) => {
-    item.quantity++;
-    // Thêm logic gọi API cập nhật giỏ hàng ở đây
+// Helper: Check if item is loading
+const isItemLoading = (cartItemId) => {
+    return loadingItemIds.value.has(cartItemId);
 }
 
-const handleDecreaseQuantity = (item) => {
-    if (item.quantity > 1) {
-        item.quantity--;
-        // Thêm logic gọi API cập nhật giỏ hàng ở đây
+const handleIncreaseQuantity = async (item) => {
+    const itemId = item.cart_item_id;
+
+    // Optimistic update: cập nhật UI ngay lập tức
+    const oldQuantity = item.quantity;
+    item.quantity++;
+
+    // Đánh dấu item đang loading
+    loadingItemIds.value.add(itemId);
+
+    try {
+        const response = await api.put(`/carts/${itemId}`, {
+            quantity: item.quantity
+        })
+
+        if (response.status === 200 && response.data.status) {
+            // Success - UI đã cập nhật, chỉ cần xóa loading flag
+        } else {
+            // Rollback nếu API trả về lỗi
+            item.quantity = oldQuantity;
+            alert('Chưa thể cập nhật số lượng giỏ hàng ngay bây giờ')
+        }
+    } catch (err) {
+        // Rollback nếu API gọi thất bại
+        item.quantity = oldQuantity;
+        console.error('Đã có lỗi xảy ra khi gọi API:', err);
+        alert('Lỗi cập nhật giỏ hàng');
+    } finally {
+        // Xóa loading flag
+        loadingItemIds.value.delete(itemId);
     }
 }
 
-const handleRemoveItem = (cartId) => {
-    console.log('Xóa sản phẩm với cart_id:', cartId);
-    // Thêm logic gọi API xóa sản phẩm khỏi giỏ hàng ở đây
+const handleDecreaseQuantity = async (item) => {
+    const itemId = item.cart_item_id;
+
+    if (item.quantity <= 1) {
+        alert('Số lượng không thể ít hơn 1');
+        return;
+    }
+
+    // Optimistic update
+    const oldQuantity = item.quantity;
+    item.quantity--;
+
+    loadingItemIds.value.add(itemId);
+
+    try {
+        const response = await api.put(`/carts/${itemId}`, {
+            quantity: item.quantity // Fix: gửi quantity-1 chứ không phải quantity+1
+        })
+
+        if (response.status === 200 && response.data.status) {
+            // Success
+        } else {
+            // Rollback
+            item.quantity = oldQuantity;
+            alert('Chưa thể cập nhật số lượng giỏ hàng ngay bây giờ')
+        }
+    } catch (err) {
+        // Rollback
+        item.quantity = oldQuantity;
+        console.error('Đã có lỗi xảy ra khi gọi API:', err);
+        alert('Lỗi cập nhật giỏ hàng');
+    } finally {
+        loadingItemIds.value.delete(itemId);
+    }
+}
+
+const handleRemoveItem = async (cartId) => {
+    if (!confirm('Bạn chắc chắn muốn xóa sản phẩm này?')) return;
+
+    try {
+        const response = await api.delete(`/carts/${cartId}`);
+        if (response.status === 200 && response.data.status) {
+            // Remove from UI
+            carts.value.cart_item = carts.value.cart_item.filter(
+                item => item.cart_item_id !== cartId
+            );
+        } else {
+            alert('Chưa thể xóa sản phẩm');
+        }
+    } catch (err) {
+        console.error('Lỗi xóa sản phẩm:', err);
+        alert('Lỗi xóa sản phẩm');
+    }
 }
 
 const totalPrice = computed(() => {
@@ -48,17 +129,41 @@ const formatCurrency = (value) => {
     return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value);
 };
 
+const priceSelector = computed(() => {
+    if (!carts.value.cart_item) return 0;
+    return carts.value.cart_item
+        .filter(item => productsSelected.value.includes(item.cart_item_id))
+        .reduce((total, item) => {
+            const price = item.variant.price > 0 ? item.variant.price : item.variant.product.price;
+            return total + (price * item.quantity);
+        }, 0);
+});
+const toogleSelectedAll = () => {
+    if (!productsSelectedAll.value) {
+        productsSelected.value = carts.value.cart_item.map(item => item.cart_item_id);
+    } else {
+        productsSelected.value = [];
+    }
+}
+watch(productsSelected, (newSelected) => {
+    if (carts.value.cart_item) {
+        productsSelectedAll.value = newSelected.length === carts.value.cart_item.length;
+    } else {
+        productsSelectedAll.value = false;
+    }
+});
 </script>
+
 <template>
     <div class="container my-5">
-        <h3 class="fw-bold mb-4"><i class="bi bi-cart3 me-2"></i>Giỏ hàng của bạn</h3>
+        <h3 class="fw-bold mb-4 color-main"><i class="bi bi-cart3 me-2"></i>Giỏ hàng của bạn</h3>
         <div class="row">
             <!-- Cột danh sách sản phẩm -->
             <div class="col-lg-8">
                 <div class="card border-0 shadow-sm rounded-3">
                     <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
                         <div class="form-check">
-                            <input class="form-check-input" type="checkbox" id="selectAll">
+                            <input class="form-check-input" type="checkbox" id="selectAll" v-model="productsSelectedAll" @click="toogleSelectedAll">
                             <label class="form-check-label fw-medium" for="selectAll">
                                 Chọn tất cả ({{ carts.cart_item ? carts.cart_item.length : 0 }} sản phẩm)
                             </label>
@@ -69,10 +174,11 @@ const formatCurrency = (value) => {
                     </div>
                     <div class="card-body">
                         <div v-if="carts.cart_item && carts.cart_item.length > 0" class="cart-list">
-                            <div v-for="cart in carts.cart_item" :key="cart.cart_id"
+                            <div v-for="cart in carts.cart_item" :key="cart.cart_item_id"
                                 class="cart-item row align-items-center py-3 border-bottom">
                                 <div class="col-1 text-center">
-                                    <input class="form-check-input" type="checkbox">
+                                    <input class="form-check-input" type="checkbox" :value="cart.cart_item_id"
+                                        v-model="productsSelected">
                                 </div>
                                 <div class="col-2">
                                     <img :src="'../../../storage/' + cart.variant.image[0].image_url"
@@ -88,31 +194,32 @@ const formatCurrency = (value) => {
                                                 :style="{ backgroundColor: cart.variant.color, width: '15px', height: '15px' }"></span>
                                             <i class="bi bi-chevron-down fw-bold ms-1 mt-2"></i>
                                         </span>
-
                                     </small>
                                     <small class="d-block mt-3">
                                         Số lượng:
                                         <span class="border px-1 py-1 rounded-5">
-                                            <button class="btn-change-stock" @click="handleDecreaseQuantity(cart)">
+                                            <button class="btn-change-stock" @click="handleDecreaseQuantity(cart)"
+                                                :disabled="isItemLoading(cart.cart_item_id)">
                                                 <i class="bi bi-dash"></i>
                                             </button>
                                             <span class="fw-medium mx-2">
                                                 {{ cart.quantity }}
                                             </span>
-                                            <button class="btn-change-stock"  @click="handleIncreaseQuantity(cart)">
+                                            <button class="btn-change-stock" @click="handleIncreaseQuantity(cart)"
+                                                :disabled="isItemLoading(cart.cart_item_id)">
                                                 <i class="bi bi-plus"></i>
                                             </button>
                                         </span>
                                     </small>
-
                                 </div>
                                 <div class="col-md-3"></div>
                                 <div class="col-2 text-end">
                                     <button class="btn btn-sm btn-outline-danger border-0"
-                                        @click="handleRemoveItem(cart.cart_id)">
+                                        @click="handleRemoveItem(cart.cart_item_id)"
+                                        :disabled="isItemLoading(cart.cart_item_id)">
                                         <i class="bi bi-trash"></i>
                                     </button>
-                                    <div class=" text-danger mt-3">
+                                    <div class="text-danger mt-3">
                                         {{ formatCurrency(cart.variant.price > 0 ? cart.variant.price :
                                             cart.variant.product.price) }}
                                     </div>
@@ -133,29 +240,23 @@ const formatCurrency = (value) => {
                 <div class="card border-0 shadow-sm rounded-3 position-sticky" style="top: 20px;">
                     <div class="card-body">
                         <h5 class="card-title fw-bold mb-3">Tổng kết đơn hàng</h5>
-                        <div class="mb-3">
-                            <label for="voucher" class="form-label">Mã giảm giá</label>
-                            <div class="input-group">
-                                <input type="text" class="form-control" id="voucher" placeholder="Nhập mã giảm giá">
-                                <button class="btn btn-outline-primary" type="button">Áp dụng</button>
-                            </div>
-                        </div>
+
                         <hr>
                         <div class="d-flex justify-content-between mb-2">
                             <span class="text-muted">Tạm tính:</span>
-                            <span class="fw-medium">{{ formatCurrency(totalPrice) }}</span>
+                            <span class="fw-medium">{{ formatCurrency(priceSelector) }}</span>
                         </div>
                         <div class="d-flex justify-content-between mb-3">
-                            <span class="text-muted">Phí vận chuyển:</span>
+                            <span class="text-muted">Giảm giá:</span>
                             <span class="fw-medium">{{ formatCurrency(0) }}</span>
                         </div>
                         <hr>
                         <div class="d-flex justify-content-between fw-bold fs-5">
                             <span>Tổng cộng:</span>
-                            <span class="text-primary">{{ formatCurrency(totalPrice) }}</span>
+                            <span class="text-primary">{{ formatCurrency(priceSelector) }}</span>
                         </div>
                         <div class="d-grid mt-4">
-                            <button class="btn btn-primary btn-lg">
+                            <button class="btn bg-main text-white btn-lg">
                                 Thanh toán
                             </button>
                         </div>
@@ -170,12 +271,20 @@ const formatCurrency = (value) => {
 .cart-item:last-child {
     border-bottom: none !important;
 }
+
 .btn-change-stock {
     background-color: transparent;
     border: none;
-    cursor: pointer
+    cursor: pointer;
+    transition: color 0.2s;
 }
-.btn-change-stock:active > i {
+
+.btn-change-stock:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.btn-change-stock:active>i {
     color: #3497E0;
 }
 </style>

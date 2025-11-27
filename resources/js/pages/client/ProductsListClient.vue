@@ -1,8 +1,8 @@
 <script setup>
 // products list
 import { ref, watch, reactive, onMounted } from 'vue';
-import api from '../axios';
-import BoxProduct from '../components/client/BoxProduct.vue';
+import api from '../../axios';
+import BoxProduct from '../../components/client/BoxProduct.vue';
 const products = ref([])
 const handleFetchProducts = async () => {
     try {
@@ -18,7 +18,7 @@ const handleFetchProducts = async () => {
 }
 onMounted(() => {
     handleFetchProducts()
-    
+
 })
 </script>
 

@@ -1,6 +1,8 @@
 <script setup>
-import { ref, onMounted, onBeforeUnmount, inject } from 'vue';
+import { ref, onMounted, onBeforeUnmount, inject, watch } from 'vue';
+import { useRoute } from 'vue-router';
 import api from '../../axios'; const authStore = inject('auth')
+import CatgoriesListHeader from './CatgoriesListHeader.vue';
 const auth = authStore.auth
 const checkLogin = authStore.checkLogin
 
@@ -36,33 +38,34 @@ console.log(auth);
 
 const handleLogout = async () => {
     try {
-        // Gọi API Đăng xuất (Axios sẽ gửi token)
         await api.post('/logout');
         // auth provider
         auth.loggedIn = false
         auth.name = ''
         auth.role = ''
         auth.token = ''
-        await checkLogin(); // 2. GỌI checkLogin ĐỂ CẬP NHẬT STATE TOÀN CỤC
-
-        // 2. Chuyển hướng người dùng về trang Đăng nhập
-        // router.push('/login');
+        await checkLogin();
 
         console.log('Đăng xuất thành công!');
 
     } catch (error) {
         console.error('Lỗi đăng xuất:', error);
-        // router.push('/login');
     }
 };
 
 const show = ref(false);
 const showBox = () => {
     show.value = true;
+
 }
 const closeBox = () => {
     show.value = false;
 }
+
+const route = useRoute();
+watch(() => route.fullPath, () => {
+    show.value = false;
+})
 
 //
 onMounted(() => {
@@ -145,11 +148,12 @@ onBeforeUnmount(() => {
                 </div>
             </div>
         </header>
-        <div class="box_header-click position-fixed start-0 top-0 w-100 h-100" v-if="show"
-            style="background-color: rgb(0, 0, 0, 0.06); z-index: 1040;">
+        <!-- ===== box header =====  -->
+        <div class="box_header-click position-fixed start-0 top-0 w-100 h-100" v-show="show"
+            style="background-color: rgb(0, 0, 0, 0.5); z-index: 1040; height: 90vh;">
             <div class="bg-light w-100">
                 <div class="show-category container bg-light" :class="{ 'open': show }">
-                    <div class="header-items d-flex justify-content-between align-items-center">
+                    <div class="header-items py-3 d-flex justify-content-between align-items-center">
                         <div class="logo-items">
                             <router-link to="/">
                                 <img src="../../../../public/images/logo_ocean.png" alt="logo ocean" width="140px">
@@ -160,101 +164,59 @@ onBeforeUnmount(() => {
                             <i class="bi bi-search fs-5 search-icon"></i>
                         </div>
                         <div class="user-items d-flex align-items-center">
-                            <span class="me-2 position-relative">
+                            <router-link to="carts" class="me-2 position-relative text-black text-decoration-none">
                                 <i class="bi bi-bag fs-4"></i>
                                 <div class="stock-cart">
                                     <small>5</small>
                                 </div>
-                            </span>
+                            </router-link>
                             <span><i class="bi bi-person fs-3"></i></span>
                         </div>
                     </div>
-                    <div class="navigation d-flex justify-content-center align-items-center mb-3">
+                    <hr class="m-0">
+                    <div class="navigation d-flex justify-content-center align-items-center my-4">
                         <ul class="d-flex nav-items">
-                            <li class="nav-link"><span class="btn btn-color fs-5">BST THU ĐÔNG</span></li>
-                            <li class="nav-link"><span class="btn btn-color fs-5"><i class="bi bi-shop-window"></i> CỬA
-                                    HÀNG</span></li>
-                            <li class="nav-link"><span class="btn btn-color fs-5"><i class="bi bi-postcard"></i> TIN
-                                    TỨC</span>
+                            <li class="nav-link">
+                                <span class="btn btn-color fs-5">
+                                 🆕   BST THU ĐÔNG
+                                </span>
                             </li>
-                            <li class="nav-link"><span class="btn btn-color fs-5">MỚI VỀ</span></li>
-                            <li class="nav-link"><span class="btn btn-color fs-5"><i class="bi bi-tags"></i> ƯU
-                                    ĐÃI</span>
+                            <li class="nav-link">
+                                <span class="btn btn-color fs-5">
+                                    <i class="bi bi-shop-window"></i>
+                                    CỬA HÀNG
+
+                                </span>
+                            </li>
+                            <li class="nav-link">
+                                <span class="btn btn-color fs-5">
+                                    <i class="bi bi-postcard"></i>
+                                    TIN TỨC
+
+                                </span>
+                            </li>
+                            <li class="nav-link">
+                                <span class="btn btn-color fs-5">
+                                    <i class="bi bi-basket2 fs-5"></i>
+                                    MỚI VỀ
+                                </span>
+                            </li>
+                            <li class="nav-link">
+                                <span class="btn btn-color fs-5">
+                                    <i class="bi bi-tags"></i>
+                                     ƯU ĐÃI
+                                </span>
                             </li>
                         </ul>
                     </div>
-                    <div class="row">
-                        <div class="col-md-3">
-                            <div class="category_list">
-                                <h2>Nam</h2>
-                                <ul>
-                                    <li>Áo khoác nam</li>
-                                    <li>Áo sơ mi nam</li>
-                                    <li>Áo thun nam</li>
-                                    <li>Quần nam</li>
-                                    <li>Giày nam</li>
-                                    <li>Phụ kiện nam</li>
-                                    <li>Áo khoác nam</li>
-                                    <li>Áo sơ mi nam</li>
-                                    <li>Áo thun nam</li>
-                                </ul>
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="category_list">
-                                <h2>Nam</h2>
-                                <ul>
-                                    <li>Áo khoác nam</li>
-                                    <li>Áo sơ mi nam</li>
-                                    <li>Áo thun nam</li>
-                                    <li>Quần nam</li>
-                                    <li>Giày nam</li>
-                                    <li>Phụ kiện nam</li>
-                                    <li>Áo khoác nam</li>
-                                    <li>Áo sơ mi nam</li>
-                                    <li>Áo thun nam</li>
-                                </ul>
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="category_list">
-                                <h2>Nam</h2>
-                                <ul>
-                                    <li>Áo khoác nam</li>
-                                    <li>Áo sơ mi nam</li>
-                                    <li>Áo thun nam</li>
-                                    <li>Quần nam</li>
-                                    <li>Giày nam</li>
-                                    <li>Phụ kiện nam</li>
-                                    <li>Áo khoác nam</li>
-                                    <li>Áo sơ mi nam</li>
-                                    <li>Áo thun nam</li>
-                                </ul>
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="category_list">
-                                <h2>Nam</h2>
-                                <ul>
-                                    <li>Áo khoác nam</li>
-                                    <li>Áo sơ mi nam</li>
-                                    <li>Áo thun nam</li>
-                                    <li>Quần nam</li>
-                                    <li>Giày nam</li>
-                                    <li>Phụ kiện nam</li>
-                                    <li>Áo khoác nam</li>
-                                    <li>Áo sơ mi nam</li>
-                                    <li>Áo thun nam</li>
-                                </ul>
-                            </div>
-                        </div>
-                    </div>
+                    <!-- catgory products -->
+                    <CatgoriesListHeader />
                 </div>
             </div>
             <div class="close-box text-center">
-                <span @click="closeBox" class="bg-light" style="cursor: pointer;">
+                <span @click="closeBox" class="bg-light btn bg-white rounded-5 mt-1" style="cursor: pointer;">
                     <i class="bi bi-x-lg"></i>
-                    Dong
+                    Đóng
                 </span>
             </div>
         </div>
@@ -352,7 +314,11 @@ ul.nav-items li {
 }
 
 .btn-color {
-    background-color: rgba(0, 0, 0, 0.063);
+    background-color: rgba(210, 207, 207, 0.5);
+}
+.btn-color:hover {
+    background-color: #3497E0;
+    color: white;
 }
 
 .show-category {
@@ -362,7 +328,7 @@ ul.nav-items li {
 }
 
 .show-category.open {
-    max-height: 100%;
+    max-height: 80vh;
 }
 
 .logged-in {

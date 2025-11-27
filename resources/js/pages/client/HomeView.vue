@@ -1,5 +1,5 @@
 <script setup>
-import SliderClient from '../components/client/SliderClient.vue';
+import SliderClient from '../../components/client/SliderClient.vue';
 </script>
 <template>
     <SliderClient/>
@@ -208,7 +208,7 @@ import SliderClient from '../components/client/SliderClient.vue';
 }
 
 .btn-color.active {
-    border: 2px solid #3497E0;
+    border: 2px solid #3497e0;
     ;
 }
 div.item{

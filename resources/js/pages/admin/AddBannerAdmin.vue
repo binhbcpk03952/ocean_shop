@@ -1,5 +1,5 @@
 <script setup>
-import api from "../axios";
+import api from "../../axios";
 import { reactive, ref } from "vue";
 import { useRouter } from "vue-router";
 
@@ -45,7 +45,7 @@ const submitBanner = async () => {
             form.image = null;
             form.link = "";
             form.imagePreview = null;
-            // router.push('/admin/banners'); // Chuyển hướng nếu có trang danh sách
+            router.push('/admin/banners'); // Chuyển hướng nếu có trang danh sách
         }
     } catch (error) {
         if (error.response && error.response.data && error.response.data.errors) {

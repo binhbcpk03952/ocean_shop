@@ -63,6 +63,6 @@ class BannerController extends Controller
         Storage::disk('public')->delete($banner->images);
         $banner->delete();
 
-        return response()->json(['message' => 'Deleted']);
+        return response()->json(['message' => 'Deleted', 'status' => true]);
     }
 }

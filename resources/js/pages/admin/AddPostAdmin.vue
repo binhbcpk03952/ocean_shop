@@ -2,7 +2,7 @@
 import { onMounted, ref } from 'vue'
 import Quill from 'quill'
 import 'quill/dist/quill.snow.css'
-import api from '../axios'
+import api from '../../axios'
 
 const form = ref({
     title: '',

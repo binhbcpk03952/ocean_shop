@@ -1,6 +1,6 @@
 <script setup>
 import { ref, onMounted } from 'vue';
-import api from '../axios';
+import api from '../../axios';
 import { Tab } from 'bootstrap';
 const posts = ref([])
 // lấy danh sách bài viết
@@ -53,17 +53,15 @@ onMounted(() => {
             </tr>
         </thead>
         <tbody>
-            <tr v-if="posts" v-for="(post, index ) in posts" :key="post.id">
+            <tr v-if="posts" v-for="(post, index) in posts" :key="post.id">
                 <td>{{ index + 1 }}</td>
-                <td><img :src="'../../../storage/' + post.thumbnail_path" alt="Thumbnail" width="100px"/></td>
+                <td><img :src="'../../../storage/' + post.thumbnail_path" alt="Thumbnail" width="100px" /></td>
                 <td>{{ post.title }}</td>
                 <td>
-                    <button class="btn btn-outline-primary py-1 me-2"
-                        >
+                    <button class="btn btn-outline-primary py-1 me-2">
                         <i class="bi bi-pencil-square"></i>
                     </button>
-                    <button class="btn btn-outline-danger py-1"
-                        @click="handleDeletePost(post.post_id)">
+                    <button class="btn btn-outline-danger py-1" @click="handleDeletePost(post.post_id)">
                         <i class="bi bi-trash"></i>
                     </button>
                 </td>
