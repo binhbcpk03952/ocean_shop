@@ -1,8 +1,13 @@
 <script setup>
-import { ref, onMounted, onBeforeUnmount } from 'vue';
-import api from '../../axios';
-axios.defaults.withCredentials = true;
-axios.defaults.baseURL = 'http://127.0.0.1:8000/';
+import { ref, onMounted, onBeforeUnmount, inject, watch } from 'vue';
+import { useRoute } from 'vue-router';
+import api from '../../axios'; const authStore = inject('auth')
+import CatgoriesListHeader from './CatgoriesListHeader.vue';
+const auth = authStore.auth
+const checkLogin = authStore.checkLogin
+
+
+
 
 const dropdownRef = ref(null);
 const dropdown = ref(false);
@@ -28,37 +33,39 @@ const handleClickOutside = (event) => {
         dropdown.value = false;
     }
 };
+console.log(auth);
+
 
 const handleLogout = async () => {
     try {
-        // Gọi API Đăng xuất (Axios sẽ gửi token)
         await api.post('/logout');
-
-        // 1. XÓA TOKEN VÀ THÔNG TIN NGƯỜI DÙNG TỪ LOCAL STORAGE
-        localStorage.removeItem('auth_token');
-        localStorage.removeItem('user_data');
-
-        // 2. Chuyển hướng người dùng về trang Đăng nhập
-        // router.push('/login');
+        // auth provider
+        auth.loggedIn = false
+        auth.name = ''
+        auth.role = ''
+        auth.token = ''
+        await checkLogin();
 
         console.log('Đăng xuất thành công!');
 
     } catch (error) {
         console.error('Lỗi đăng xuất:', error);
-        // Vẫn nên xóa token ngay cả khi API lỗi (để người dùng có thể thử đăng nhập lại)
-        localStorage.removeItem('auth_token');
-        localStorage.removeItem('user_data');
-        // router.push('/login');
     }
 };
 
 const show = ref(false);
 const showBox = () => {
     show.value = true;
+
 }
 const closeBox = () => {
     show.value = false;
 }
+
+const route = useRoute();
+watch(() => route.fullPath, () => {
+    show.value = false;
+})
 
 //
 onMounted(() => {
@@ -71,73 +78,82 @@ onBeforeUnmount(() => {
 
 <template>
     <div class="container">
-
-
-        <div class="text-end color-primary mt-1 mb-0" v-if="user">
+        <div class="text-end color-primary mt-1 mb-0" v-if="auth.loggedIn">
             <span class="bg-secondary text-white px-3 rounded-5">
-                Xin chào {{ user.name }}
+                Xin chào {{ auth.user }}
             </span>
 
         </div>
-        <header style="background-color: white;" class="py-3 position-sticky top-0">
-            <div class="d-flex justify-content-between align-items-center">
-                <nav>
-                    <ul class="d-flex nav-items">
-                        <li style="cursor: pointer;">
-                            <router-link class="nav-link" to="/product">
-                                Thời trang <i  @click="showBox" class="bi bi-chevron-down"></i>
-                            </router-link>
-                        </li>
-                        <li>
-                            <router-link class="nav-link">Ưu đãi</router-link>
-                        </li>
-                        <li><router-link class="nav-link">Đồng phục</router-link></li>
-                        <li><router-link to="/store" class="nav-link">Cửa hàng</router-link></li>
-                        <li><router-link to="/blog" class="nav-link">Tin tức</router-link></li>
-                    </ul>
-                </nav>
-                <div class="logo">
-                    <router-link to="/">
-                        <img src="../../../../public/images/logo_ocean.png" alt="Logo Ocean" width="140px">
-                    </router-link>
-                </div>
-                <div class="end-items d-flex justify-content-between align-items-center">
-                    <div class="search me-3 position-relative">
-                        <input type="text" id="search" placeholder="Tìm kiếm...">
-                        <button type="submit" class="position-absolute start-0 btn-search">
-                            <i class="bi bi-search fs-5"></i>
-                        </button>
+        <header class="py-3 header-sticky">
+            <div class="container">
+                <div class="d-flex justify-content-between align-items-center">
+                    <nav>
+                        <ul class="d-flex nav-items">
+                            <li style="cursor: pointer;">
+                                <router-link class="nav-link" to="/products">
+                                    Thời trang <i @click.stop.prevent="showBox" class="bi bi-chevron-down"></i>
+                                </router-link>
+                            </li>
+                            <li>
+                                <router-link class="nav-link">Ưu đãi</router-link>
+                            </li>
+                            <li><router-link class="nav-link">Đồng phục</router-link></li>
+                            <li><router-link to="/store" class="nav-link">Cửa hàng</router-link></li>
+                            <li><router-link to="/blog" class="nav-link">Tin tức</router-link></li>
+                        </ul>
+                    </nav>
+
+                    <div class="logo">
+                        <router-link to="/">
+                            <img src="../../../../public/images/logo_ocean.png" alt="Logo Ocean" width="140px">
+                        </router-link>
                     </div>
-                    <div class="user d-flex align-items-center">
-                        <span class="me-2 position-relative">
-                            <i class="bi bi-bag fs-4"></i>
-                            <div class="stock-cart">
-                                <small>5</small>
-                            </div>
-                        </span>
-                        <div class="user-login">
-                            <span class="logged-in" v-if="user" @click="handleDropdown" ref="dropdownRef">
-                                <i class="bi bi-person fs-3"></i>
-                                <div class="drop-down py-1" v-show="dropdown">
-                                    <router-link to="/profile" class="nav-link p-1 ps-3">Thông tin cá nhân</router-link>
-                                    <router-link to="/admin" v-if="user.role === 'admin'" class="nav-link p-1 ps-3">Quản
-                                        trị</router-link>
-                                    <span @click="handleLogout"
-                                        class="nav-link p-1 ps-3 w-100 text-danger text-left">Đăng
-                                        xuất</span>
+
+                    <div class="end-items d-flex justify-content-between align-items-center">
+                        <div class="search me-3 position-relative">
+                            <input type="text" id="search" placeholder="Tìm kiếm...">
+                            <button type="submit" class="position-absolute start-0 btn-search">
+                                <i class="bi bi-search fs-5"></i>
+                            </button>
+                        </div>
+
+                        <div class="user d-flex align-items-center">
+                            <router-link to="/carts" class="me-2 position-relative">
+                                <i class="bi bi-bag text-black fs-4"></i>
+                                <div class="stock-cart">
+                                    <small>5</small>
                                 </div>
-                            </span>
-                            <router-link to="/login" v-else><i class="bi bi-person fs-3"></i></router-link>
+                            </router-link>
+
+                            <div class="user-login">
+                                <span class="logged-in" v-if="auth.loggedIn" @click="handleDropdown" ref="dropdownRef">
+                                    <i class="bi bi-person fs-3"></i>
+
+                                    <div class="drop-down py-1" v-show="dropdown" style="z-index: 1030;">
+                                        <router-link to="/profile" class="nav-link p-1 ps-3">Thông tin cá
+                                            nhân</router-link>
+                                        <router-link to="/admin" v-if="auth.role === 'admin'"
+                                            class="nav-link p-1 ps-3">Quản trị</router-link>
+                                        <span @click="handleLogout"
+                                            class="nav-link p-1 ps-3 w-100 text-danger text-left">Đăng xuất</span>
+                                    </div>
+                                </span>
+
+                                <router-link to="/login" v-else>
+                                    <i class="bi bi-person fs-3"></i>
+                                </router-link>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
         </header>
-        <div class="box_header-click position-fixed start-0 top-0 w-100 h-100" v-if="show"
-            style="background-color: rgb(0, 0, 0, 0.06);">
+        <!-- ===== box header =====  -->
+        <div class="box_header-click position-fixed start-0 top-0 w-100 h-100" v-show="show"
+            style="background-color: rgb(0, 0, 0, 0.5); z-index: 1040; height: 90vh;">
             <div class="bg-light w-100">
                 <div class="show-category container bg-light" :class="{ 'open': show }">
-                    <div class="header-items d-flex justify-content-between align-items-center">
+                    <div class="header-items py-3 d-flex justify-content-between align-items-center">
                         <div class="logo-items">
                             <router-link to="/">
                                 <img src="../../../../public/images/logo_ocean.png" alt="logo ocean" width="140px">
@@ -148,101 +164,59 @@ onBeforeUnmount(() => {
                             <i class="bi bi-search fs-5 search-icon"></i>
                         </div>
                         <div class="user-items d-flex align-items-center">
-                            <span class="me-2 position-relative">
+                            <router-link to="carts" class="me-2 position-relative text-black text-decoration-none">
                                 <i class="bi bi-bag fs-4"></i>
                                 <div class="stock-cart">
                                     <small>5</small>
                                 </div>
-                            </span>
+                            </router-link>
                             <span><i class="bi bi-person fs-3"></i></span>
                         </div>
                     </div>
-                    <div class="navigation d-flex justify-content-center align-items-center mb-3">
+                    <hr class="m-0">
+                    <div class="navigation d-flex justify-content-center align-items-center my-4">
                         <ul class="d-flex nav-items">
-                            <li class="nav-link"><span class="btn btn-color fs-5">BST THU ĐÔNG</span></li>
-                            <li class="nav-link"><span class="btn btn-color fs-5"><i class="bi bi-shop-window"></i> CỬA
-                                    HÀNG</span></li>
-                            <li class="nav-link"><span class="btn btn-color fs-5"><i class="bi bi-postcard"></i> TIN
-                                    TỨC</span>
+                            <li class="nav-link">
+                                <span class="btn btn-color fs-5">
+                                 🆕   BST THU ĐÔNG
+                                </span>
                             </li>
-                            <li class="nav-link"><span class="btn btn-color fs-5">MỚI VỀ</span></li>
-                            <li class="nav-link"><span class="btn btn-color fs-5"><i class="bi bi-tags"></i> ƯU
-                                    ĐÃI</span>
+                            <li class="nav-link">
+                                <span class="btn btn-color fs-5">
+                                    <i class="bi bi-shop-window"></i>
+                                    CỬA HÀNG
+
+                                </span>
+                            </li>
+                            <li class="nav-link">
+                                <span class="btn btn-color fs-5">
+                                    <i class="bi bi-postcard"></i>
+                                    TIN TỨC
+
+                                </span>
+                            </li>
+                            <li class="nav-link">
+                                <span class="btn btn-color fs-5">
+                                    <i class="bi bi-basket2 fs-5"></i>
+                                    MỚI VỀ
+                                </span>
+                            </li>
+                            <li class="nav-link">
+                                <span class="btn btn-color fs-5">
+                                    <i class="bi bi-tags"></i>
+                                     ƯU ĐÃI
+                                </span>
                             </li>
                         </ul>
                     </div>
-                    <div class="row">
-                        <div class="col-md-3">
-                            <div class="category_list">
-                                <h2>Nam</h2>
-                                <ul>
-                                    <li>Áo khoác nam</li>
-                                    <li>Áo sơ mi nam</li>
-                                    <li>Áo thun nam</li>
-                                    <li>Quần nam</li>
-                                    <li>Giày nam</li>
-                                    <li>Phụ kiện nam</li>
-                                    <li>Áo khoác nam</li>
-                                    <li>Áo sơ mi nam</li>
-                                    <li>Áo thun nam</li>
-                                </ul>
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="category_list">
-                                <h2>Nam</h2>
-                                <ul>
-                                    <li>Áo khoác nam</li>
-                                    <li>Áo sơ mi nam</li>
-                                    <li>Áo thun nam</li>
-                                    <li>Quần nam</li>
-                                    <li>Giày nam</li>
-                                    <li>Phụ kiện nam</li>
-                                    <li>Áo khoác nam</li>
-                                    <li>Áo sơ mi nam</li>
-                                    <li>Áo thun nam</li>
-                                </ul>
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="category_list">
-                                <h2>Nam</h2>
-                                <ul>
-                                    <li>Áo khoác nam</li>
-                                    <li>Áo sơ mi nam</li>
-                                    <li>Áo thun nam</li>
-                                    <li>Quần nam</li>
-                                    <li>Giày nam</li>
-                                    <li>Phụ kiện nam</li>
-                                    <li>Áo khoác nam</li>
-                                    <li>Áo sơ mi nam</li>
-                                    <li>Áo thun nam</li>
-                                </ul>
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="category_list">
-                                <h2>Nam</h2>
-                                <ul>
-                                    <li>Áo khoác nam</li>
-                                    <li>Áo sơ mi nam</li>
-                                    <li>Áo thun nam</li>
-                                    <li>Quần nam</li>
-                                    <li>Giày nam</li>
-                                    <li>Phụ kiện nam</li>
-                                    <li>Áo khoác nam</li>
-                                    <li>Áo sơ mi nam</li>
-                                    <li>Áo thun nam</li>
-                                </ul>
-                            </div>
-                        </div>
-                    </div>
+                    <!-- catgory products -->
+                    <CatgoriesListHeader />
                 </div>
             </div>
             <div class="close-box text-center">
-                <span @click="closeBox" class="bg-light" style="cursor: pointer;">
+                <span @click="closeBox" class="bg-light btn bg-white rounded-5 mt-1" style="cursor: pointer;">
                     <i class="bi bi-x-lg"></i>
-                    Dong
+                    Đóng
                 </span>
             </div>
         </div>
@@ -301,9 +275,13 @@ ul.nav-items li {
     transform: translateX(-50%);
 }
 
-header {
-    position: relative;
+.header-sticky {
+    position: sticky;
+    top: 0;
+    z-index: 1030;
+    background-color: white;
 }
+
 
 #search-item {
     width: 450px;
@@ -336,7 +314,11 @@ header {
 }
 
 .btn-color {
-    background-color: rgba(0, 0, 0, 0.063);
+    background-color: rgba(210, 207, 207, 0.5);
+}
+.btn-color:hover {
+    background-color: #3497E0;
+    color: white;
 }
 
 .show-category {
@@ -346,7 +328,7 @@ header {
 }
 
 .show-category.open {
-    max-height: 100%;
+    max-height: 80vh;
 }
 
 .logged-in {

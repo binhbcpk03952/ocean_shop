@@ -16,9 +16,10 @@ class AuthController extends Controller
         $validated = $request->validate([
             'name' => 'required',
             'email' => 'required|email|unique:users',
-            'password' => 'required|confirmed|min:6',
+            'password' => 'required|min:6',
+        ], [
+            'email.unique' => 'Email đã được sử dụng.',
         ]);
-
         $user = User::create([
             'name' => $validated['name'],
             'email' => $validated['email'],
@@ -42,7 +43,7 @@ class AuthController extends Controller
         // 3. Kiểm tra người dùng và mật khẩu
         if (!$user || !Hash::check($request->password, $user->password)) {
             return response()->json([
-                'message' => 'Thông tin đăng nhập không hợp lệ.'
+                'message' => 'Thông tin đăng nhập không hợp lệ.',
             ], 401);
         }
 
@@ -60,22 +61,6 @@ class AuthController extends Controller
             'user' => $user, // Thông tin người dùng sẽ được trả về
         ]);
     }
-
-    /**
-     * @OA\Post(
-     * path="/logout",
-     * summary="Đăng xuất người dùng (thu hồi token)",
-     * tags={"Authentication"},
-     * security={{"sanctum":{}}},
-     * @OA\Response(
-     * response=200,
-     * description="Đăng xuất thành công",
-     * @OA\JsonContent(
-     * @OA\Property(property="message", type="string", example="Đăng xuất thành công!")
-     * )
-     * )
-     * )
-     */
     public function logout(Request $request)
     {
         // 1. Thu hồi (xóa) token hiện tại của người dùng đã xác thực
@@ -86,23 +71,46 @@ class AuthController extends Controller
             'message' => 'Đăng xuất thành công!'
         ]);
     }
-
-    /**
-     * @OA\Get(
-     * path="/user",
-     * summary="Lấy thông tin người dùng hiện tại",
-     * tags={"Authentication"},
-     * security={{"sanctum":{}}},
-     * @OA\Response(
-     * response=200,
-     * description="Thông tin người dùng",
-     * @OA\JsonContent(ref="#/components/schemas/User")
-     * )
-     * )
-     */
     public function user(Request $request)
     {
         // Trả về thông tin người dùng đã được xác thực (Auth::user())
         return response()->json($request->user());
+    }
+
+    public function users(Request $request)
+    {
+        $users = User::all();
+        return response()->json($users);
+    }
+    public function update(Request $request, $user_id)
+    {
+        $request->validate([
+            'name' => 'required',
+            'email' => 'required|email|unique:users,email,' . $user_id . ',user_id',
+            'role' => 'required|in:admin,user',
+        ], [
+            'email.unique' => 'Email đã được sử dụng.',
+        ]);
+        $user = User::findOrFail($user_id);
+        if (!$user) {
+            return response()->json(['message' => 'Người dùng không tồn tại!'], 404);
+        }
+        $user->update([
+            'name' => $request->name,
+            'email' => $request->email,
+            'role' => $request->role,
+        ]);
+
+        return response()->json(['message' => 'Cập nhật thành công!', $user], 200);
+    }
+    public function destroy ($user_id)
+    {
+        $user = User::findOrFail($user_id);
+        $userLogin = Auth::user();
+        if ($user->user_id === $userLogin->user_id) {
+            return response()->json(['message' => 'Bạn không thể xóa chính mình!'], 403);
+        }
+        $user->delete();
+        return response()->json(['message' => 'Xóa người dùng thành công!', 'status' => true], 200);
     }
 }
