@@ -7,5 +7,9 @@
 
 h1 {
     color: #42b883;
+
+}
+body {
+    position: relative;
 }
 </style>

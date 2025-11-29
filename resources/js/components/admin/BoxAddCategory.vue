@@ -1,5 +1,5 @@
 <script setup>
-import { reactive, ref, onMounted } from 'vue';
+import { reactive, ref, onMounted, watch } from 'vue';
 import api from '../../axios';
 import CategoryFormItem from './CategoryFormItem.vue';
 
@@ -56,6 +56,13 @@ const handleFetchCategories = async () => {
         console.error('Lỗi khi lấy danh sách danh mục:', error)
     }
 }
+
+watch(() => props.showBoxAddCategory, (newVal) => {
+    if (newVal && props.mode === 'add') {
+        handleFetchCategories();
+        handleResetForm();
+    }
+})
 onMounted(() => {
     handleFetchCategories()
 })
@@ -80,11 +87,7 @@ const handleAddCategory = async () => {
     }
 
     try {
-        const response = await api.post('/categories', formData, {
-            headers: {
-                'Content-Type': 'multipart/form-data'
-            }
-        });
+        const response = await api.post('/categories', formData);
         if (response.data.success) {
             alert('Thêm danh mục thành công!');
             emit('closeBoxAddCate');
@@ -119,7 +122,7 @@ const handleAddCategory = async () => {
                         </div>
                         <div class="mb-3">
                             <label for="pCategory" class="form-label">Danh mục cha</label>
-                            <ul class="list-unstyled">
+                            <ul class="list-unstyled " style="max-height: 300px; overflow-y: auto;">
                                 <li>
                                     <input type="radio" id="cat-0" :value="null" v-model="categories.parent"
                                         class="form-check-input me-2" name="category">

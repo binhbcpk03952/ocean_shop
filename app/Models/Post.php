@@ -10,10 +10,10 @@ class Post extends Model
 {
     protected $table = 'posts';
     protected $primaryKey = 'post_id';
-    protected $fillable = [ 'user_id','title', 'slug', 'content', 'thumbnail_path'];
+    protected $fillable = ['user_id', 'title', 'slug', 'content', 'thumbnail_path'];
 
     public function user()
     {
         return $this->belongsTo(User::class, 'user_id', 'user_id');
     }
-}
+};

@@ -1,8 +1,13 @@
 <script setup>
 import { onMounted, reactive, ref, watch } from "vue";
 import { useRouter, useRoute } from "vue-router";
+<<<<<<< HEAD:resources/js/pages/ProductsListAdmin.vue
 import api from "../axios";
 import ProductDetail from "../components/admin/ProductDetail.vue";
+=======
+import api from "../../axios";
+import ProductDetail from "../../components/admin/ProductDetail.vue";
+>>>>>>> 2d930c301b1b4b55d65bd52695535434ba2c1be7:resources/js/pages/admin/ProductsListAdmin.vue
 const router = useRouter();
 const route = useRoute();
 const products = reactive({
@@ -152,9 +157,12 @@ watch(() => route.query,
                         <td>{{ index + 1 }}</td>
                         <td>{{ prod.name }}</td>
                         <td class="text-end">{{ formatCurrency(prod.price) }}</td>
-                        <td class="text-center"><span class="bg-success text-white rounded px-1 small">{{
-                            prod.categories.name
-                        }}</span></td>
+                        <td class="text-center">
+                            <span class="bg-success text-white rounded px-1 small" v-if="prod.categories">
+                                {{ prod.categories.name }}
+                            </span>
+                            <span v-else>Chưa có danh mục</span>
+                        </td>
                         <td>{{ formatDate(prod.created_at) }}</td>
                         <td>
                             <span class="text-primary small text-decoration-underline" style="cursor: pointer;"
@@ -163,7 +171,7 @@ watch(() => route.query,
                             </span>
                         </td>
                         <td class="text-center">
-                            <router-link :to="'/admin/update_product/' + prod.product_id" :key="prod.product_id"
+                            <router-link :to="'/admin/edit_product/' + prod.product_id" :key="prod.product_id"
                                 class="btn btn-sm btn-outline-primary">Edit</router-link>
                             <button class="btn btn-sm btn-outline-danger ms-1">
                                 Delete
