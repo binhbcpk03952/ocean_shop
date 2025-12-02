@@ -1,0 +1,43 @@
+/* resources/css/bootstrap.css */
+
+/* 1. Import Bootstrap CSS */
+@import "bootstrap/dist/css/bootstrap.min.css";
+
+/* 2. Import Bootstrap Icons CSS */
+@import "bootstrap-icons/font/bootstrap-icons.css";
+
+@import url("https://fonts.googleapis.com/css2?family=Instrument+Sans:ital,wght@0,400..700;1,400..700&family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Manrope:wght@200..800&display=swap");
+:root {
+    --color: #3497E0;
+}
+* {
+    font-family: "Inter", sans-serif;
+    font-optical-sizing: auto;
+}
+/* Tùy chỉnh màu sắc và kích thước chung cho cả hai nút */
+.swiper-button-prev,
+.swiper-button-next {
+    width: 30px !important;
+    height: 30px !important;
+    color: rgb(14, 0, 0);
+    z-index: 1;
+}
+.swiper-button-prev:after,
+.swiper-button-next:after {
+    font-size: 20px !important;
+}
+
+
+.swiper-button-prev {
+    left: 20px;
+}
+
+.swiper-button-next {
+    right: 20px;
+}
+.color-main {
+    color: var(--color) !important;
+}
+.bg-main {
+    background-color: var(--color) !important;
+}
