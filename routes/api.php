@@ -2,60 +2,70 @@
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+
+// Controllers
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\ProductController;
-
 use App\Http\Controllers\Api\CartController;
 use App\Http\Controllers\Api\PostController;
 use App\Http\Controllers\Api\BannerController;
+use App\Http\Controllers\GeminiAIController;
 
 
+/*
+|--------------------------------------------------------------------------
+| API Routes
+|--------------------------------------------------------------------------
+*/
 
-// Route đăng ký
-
+// 🔹 AUTH PUBLIC ROUTES
 Route::post('/register', [AuthController::class, 'register']);
-Route::post('login', [AuthController::class, 'login']);
+Route::post('/login',     [AuthController::class, 'login']);
 
-// Route cần xác thực (Sử dụng middleware 'auth:sanctum')
+// 🔹 CHAT AI PUBLIC ROUTE
+Route::post('/chat-ai', [GeminiAIController::class, 'chat']);
+
+// 🔹 PRODUCTS PUBLIC ROUTES
+Route::get('/products',          [ProductController::class, 'index']);
+Route::get('/products/{id}',     [ProductController::class, 'show']);
+
+// 🔹 BANNERS PUBLIC ROUTES
+Route::get('/banners', [BannerController::class, 'index']);
+
+// 🔒 PROTECTED ROUTES (LOGIN REQUIRED)
 Route::middleware('auth:sanctum')->group(function () {
-    // Route Đăng xuất
-    Route::post('logout', [AuthController::class, 'logout']);
 
-    // Route Lấy thông tin người dùng
-    Route::get('user', [AuthController::class, 'user']);
-    Route::get('users', [AuthController::class, 'users']);
-    Route::put('users/{id}', [AuthController::class, 'update']);
-    Route::delete('users/{id}', [AuthController::class, 'destroy']);
+    // Auth
+    Route::post('/logout', [AuthController::class, 'logout']);
+    Route::get('/user',    [AuthController::class, 'user']);
 
+    // Users
+    Route::get('/users',         [AuthController::class, 'users']);
+    Route::put('/users/{id}',    [AuthController::class, 'update']);
+    Route::delete('/users/{id}', [AuthController::class, 'destroy']);
 
-    // route thêm danh mục
-    // route danh sách danh mục
-    Route::get('categories', [CategoryController::class, 'index']);
-    Route::post('categories', [CategoryController::class, 'store']);
-    Route::delete('categories/{id}', [CategoryController::class, 'destroy']);
+    // Categories
+    Route::get('/categories',        [CategoryController::class, 'index']);
+    Route::post('/categories',       [CategoryController::class, 'store']);
+    Route::delete('/categories/{id}',[CategoryController::class, 'destroy']);
 
-    // Route cho Giỏ hàng
-    Route::post('cart', [\App\Http\Controllers\Api\CartController::class, 'store']);
-    Route::post('products', [ProductController::class, 'store']);
-    Route::post('carts', [CartController::class, 'store']);
-    Route::get('carts', [CartController::class, 'index']);
-    Route::post('products', [ProductController::class, 'store']);
-    // Route::post('cart', [CartController::class, 'store']);
-    Route::post('carts', [CartController::class, 'store']);
-    Route::get('carts', [CartController::class, 'index']);
-    Route::put('carts/{id}', [CartController::class, 'updateQuantity']);
+    // Products
+    Route::post('/products', [ProductController::class, 'store']);
 
-    Route::post('posts', [PostController::class, 'store']);
-    Route::get('posts', [PostController::class, 'index']);
-    Route::get('posts/{id}', [PostController::class, 'show']);
-    Route::delete('posts/{id}', [PostController::class, 'destroy']);
+    // Cart
+    Route::get('/carts',          [CartController::class, 'index']);
+    Route::post('/carts',         [CartController::class, 'store']);
+    Route::put('/carts/{id}',     [CartController::class, 'updateQuantity']);
 
-    Route::post('banners', [BannerController::class, 'store']);
-    Route::put('banners/{id}', [BannerController::class, 'update']);
-    Route::delete('banners/{id}', [BannerController::class, 'destroy']);
+    // Posts
+    Route::get('/posts',        [PostController::class, 'index']);
+    Route::get('/posts/{id}',   [PostController::class, 'show']);
+    Route::post('/posts',       [PostController::class, 'store']);
+    Route::delete('/posts/{id}',[PostController::class, 'destroy']);
+
+    // Banners
+    Route::post('/banners',        [BannerController::class, 'store']);
+    Route::put('/banners/{id}',    [BannerController::class, 'update']);
+    Route::delete('/banners/{id}', [BannerController::class, 'destroy']);
 });
-Route::get('banners', [BannerController::class, 'index']);
-Route::get('products', [ProductController::class, 'index']);
-Route::get('products/{id}', [ProductController::class, 'show']);
-Route::get('products/{id}', [ProductController::class, 'show']);

@@ -4,6 +4,7 @@ import { ref, watch, reactive, onMounted } from 'vue';
 import api from '../../axios';
 import BoxProduct from '../../components/client/BoxProduct.vue';
 const products = ref([])
+
 const handleFetchProducts = async () => {
     try {
         const response = await api.get('/products')
@@ -16,35 +17,63 @@ const handleFetchProducts = async () => {
         console.error('Lỗi khi lấy danh sách sản phẩm:', error)
     }
 }
+
 onMounted(() => {
     handleFetchProducts()
-
 })
 </script>
 
 <template>
-    <div class="container">
-        <div class="breadcrumb" style="font-size: 15px;">
-            <router-link class="text-secondary me-1">Trang chủ /</router-link> Tên danh mục
-        </div>
-        <div class="fillter-products">
-            <button class="btn-custom">Ưu đãi</button>
-            <button class="btn-custom">Mới nhất</button>
+    <div class="container py-3">
 
-            <button>
-                <i class="bi bi-funnel "></i>
+        <!-- Breadcrumb đẹp hơn -->
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item">
+                    <router-link to="/" class="text-decoration-none text-secondary">Trang chủ</router-link>
+                </li>
+                <li class="breadcrumb-item active" aria-current="page">Tên danh mục</li>
+            </ol>
+        </nav>
+
+        <!-- FILTER -->
+        <div class="d-flex gap-2 mb-3">
+
+            <button class="btn btn-outline-primary rounded-pill px-3">
+                Ưu đãi
+            </button>
+
+            <button class="btn btn-outline-success rounded-pill px-3">
+                Mới nhất
+            </button>
+
+            <button class="btn btn-primary rounded-pill px-3 d-flex align-items-center gap-1">
+                <i class="bi bi-funnel"></i>
                 Lọc
             </button>
         </div>
-        <div class="row">
-            <BoxProduct v-for="product in products" :key="product.product_id" :product="product" />
+
+        <!-- PRODUCTS -->
+        <div class="row g-3">
+            <BoxProduct
+                v-for="product in products"
+                :key="product.product_id"
+                :product="product"
+                class="col-6 col-md-4 col-lg-3"
+            />
         </div>
     </div>
 </template>
+
 <style scoped>
+/* Điều chỉnh nút filter đẹp hơn */
 .btn-custom {
     border: none;
     background-color: transparent;
     font-weight: 400;
+}
+
+.breadcrumb {
+    font-size: 15px;
 }
 </style>
