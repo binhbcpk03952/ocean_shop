@@ -20,6 +20,7 @@ return new class extends Migration
             $table->string('sex');
             $table->string('phone');
             $table->integer('age');
+            $table->string('avatar')->nullable();
             $table->rememberToken();
             $table->timestamps();
         });

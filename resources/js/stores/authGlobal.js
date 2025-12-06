@@ -5,6 +5,7 @@ export const authState = reactive({
     loggedIn: false,
     user: null,
     role: null,
+    email: null,
     token: null,
     initialized: false,
 })
@@ -18,6 +19,7 @@ export const checkLogin = async () => {
             authState.loggedIn = true
         authState.user = res.data.name
         authState.role = res.data.role
+        authState.email = res.data.email
 
     } catch (e) {
         // Nếu lỗi (401, 419, token hết hạn…) → Đặt loggedIn = false

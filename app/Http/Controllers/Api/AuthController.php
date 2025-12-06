@@ -103,7 +103,7 @@ class AuthController extends Controller
 
         return response()->json(['message' => 'Cập nhật thành công!', $user], 200);
     }
-    public function destroy ($user_id)
+    public function destroy($user_id)
     {
         $user = User::findOrFail($user_id);
         $userLogin = Auth::user();
@@ -112,5 +112,62 @@ class AuthController extends Controller
         }
         $user->delete();
         return response()->json(['message' => 'Xóa người dùng thành công!', 'status' => true], 200);
+    }
+
+
+    public function changePassword(Request $request, $user_id)
+    {
+        $request->validate([
+            'current_password' => 'required',
+            'new_password' => 'required|min:6|confirmed',
+        ]);
+
+        $user = User::findOrFail($user_id);
+
+        // Kiểm tra mật khẩu hiện tại
+        if (!Hash::check($request->current_password, $user->password)) {
+            return response()->json(['message' => 'Mật khẩu hiện tại không đúng!'], 400);
+        }
+
+        // Cập nhật mật khẩu mới
+        $user->password = Hash::make($request->new_password);
+        $user->save();
+
+        return response()->json(['message' => 'Đổi mật khẩu thành công!'], 200);
+    }
+
+    public function updateProfile(Request $request)
+    {
+        $user_id = $request->user()->user_id;
+        $request->validate([
+            'name' => 'required',
+            'email' => 'required|email|unique:users,email,' . $user_id . ',user_id',
+            'sex' => 'nullable',
+            'phone' => 'nullable|string|max:10',
+        ], [
+            'email.unique' => 'Email đã được sử dụng.',
+        ]);
+
+        $user = User::findOrFail($user_id);
+        if (!$user) {
+            return response()->json(['message' => 'Người dùng không tồn tại!'], 404);
+        }
+
+        $data = [
+            'name' => $request->name,
+            'email' => $request->email,
+        ];
+
+        // Nếu client gửi trường sex / phone thì ghi nhận (dùng has để chấp nhận giá trị rỗng nếu cần)
+        if ($request->has('sex')) {
+            $data['sex'] = $request->sex;
+        }
+        if ($request->has('phone')) {
+            $data['phone'] = $request->phone;
+        }
+
+        $user->update($data);
+
+        return response()->json(['message' => 'Cập nhật hồ sơ thành công!', $user], 200);
     }
 }

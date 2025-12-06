@@ -20,6 +20,11 @@ class BannerController extends Controller
         $request->validate([
             'images' => 'required|image|mimes:jpeg,png,jpg,gif,svg,webp|max:2048',
             'link' => 'nullable|string',
+        ], [
+            'images.required' => 'Hình ảnh banner là bắt buộc.',
+            'images.image' => 'Tệp tải lên phải là hình ảnh.',
+            'images.mimes' => 'Hình ảnh phải có định dạng: jpeg, png, jpg, gif, svg, webp.',
+            'images.max' => 'Kích thước hình ảnh không được vượt quá 2MB.',
         ]);
 
         $path = null;
@@ -33,7 +38,7 @@ class BannerController extends Controller
         $banner = Banner::create([
             'user_id' => $user_id,
             'images' => $path,
-            'link' => $request->link,
+            'link' => $request->link ? $request->link : null,
         ]);
 
         return response()->json($banner, 201);

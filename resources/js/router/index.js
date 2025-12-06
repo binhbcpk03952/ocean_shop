@@ -1,6 +1,8 @@
 import { createRouter, createWebHistory } from "vue-router";
 import AdminLayout from "../layouts/AdminLayout.vue";
 import ClientLayout from "../layouts/ClientLayout.vue";
+import ProfileLayout from "../layouts/ProfileLayout.vue";
+import namespace from "quill/core/logger";
 const routes = [
     {
         path: '/',
@@ -68,7 +70,40 @@ const routes = [
                 path: '/checkout',
                 name: 'checkout',
                 component: () => import('../pages/client/Checkout.vue')
+            },
+            {
+                path: '/profile',
+                component: ProfileLayout,
+                children: [
+                    {
+                        path: '',
+                        name: 'profile',
+                        component: () => import('../pages/client/Profile.vue')
+                    },
+                    {
+                        path: 'address',
+                        name: 'address',
+                        component: () => import('../pages/client/Address.vue')
+                    },
+                ]
+            },
+
+            {
+                path: 'create_address',
+                name: 'create_address',
+                component: () => import('../pages/client/CreateAddress.vue')
+            },
+            {
+                path: 'orders_success',
+                name: 'orders_success',
+                component: () => import('../pages/client/OrderSuccess.vue')
+            },
+            {
+                path: 'vnpay_return',
+                name: 'vnpay_return',
+                component: () => import('../pages/client/VnpayReturn.vue')
             }
+
         ]
     },
     {

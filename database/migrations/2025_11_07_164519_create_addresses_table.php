@@ -22,6 +22,7 @@ return new class extends Migration
             $table->string('ward');
             $table->string('district');
             $table->string('province');
+            $table->string('type');
             $table->boolean('is_default');
             $table->timestamps();
         });
