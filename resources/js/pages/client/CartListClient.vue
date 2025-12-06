@@ -1,11 +1,33 @@
 <script setup>
 import { ref, reactive, onMounted, computed, watch } from 'vue';
 import api from '../../axios';
+import ModalChangeVariant from '../../components/client/ModalChangeVariant.vue';
+import { useRouter } from 'vue-router';
+
+const router = useRouter();
+
 
 const carts = ref([])
 const loadingItemIds = ref(new Set()); // Track which items are loading
 const productsSelected = ref([]);
 const productsSelectedAll = ref(false)
+
+const openModal = ref(false);
+const selectedProductId = ref(null)
+const selectedColor = ref(null)
+const selectesSize = ref(null)
+const handleOpenModal = (cart) => {
+    selectedProductId.value = cart.variant.product_id;
+    selectedColor.value = cart.variant.color;
+    selectesSize.value = cart.variant.size;
+    openModal.value = true;
+}
+const handleCloseModal = () => {
+    openModal.value = false;
+    selectedProductId.value = null;
+    selectedColor.value = null;
+    selectesSize.value = null;
+}
 
 const handleFetchCarts = async () => {
     try {
@@ -117,13 +139,6 @@ const handleRemoveItem = async (cartId) => {
     }
 }
 
-const totalPrice = computed(() => {
-    if (!carts.value.cart_item) return 0;
-    return carts.value.cart_item.reduce((total, item) => {
-        const price = item.variant.price > 0 ? item.variant.price : item.variant.product.price;
-        return total + (price * item.quantity);
-    }, 0);
-});
 
 const formatCurrency = (value) => {
     return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value);
@@ -140,11 +155,26 @@ const priceSelector = computed(() => {
 });
 const toogleSelectedAll = () => {
     if (!productsSelectedAll.value) {
-        productsSelected.value = carts.value.cart_item.map(item => item.cart_item_id);
+        productsSelected.value = carts.value.cart_item.map(item => item.variant_id);
     } else {
         productsSelected.value = [];
     }
 }
+const handleToCheckout = () => {
+    if (productsSelected.value.length === 0) {
+        alert('Vui lòng chọn sản phẩm để thanh toán');
+        return;
+    }
+    // Chuyển hướng đến trang thanh toán với các sản phẩm đã chọn
+    router.push({
+        path: '/checkout', // Hoặc name: 'Checkout' tuỳ theo router của bạn
+        query: {
+            products: JSON.stringify(productsSelected.value)
+        }
+    });
+
+}
+
 watch(productsSelected, (newSelected) => {
     if (carts.value.cart_item) {
         productsSelectedAll.value = newSelected.length === carts.value.cart_item.length;
@@ -155,6 +185,13 @@ watch(productsSelected, (newSelected) => {
 </script>
 
 <template>
+    <modal-change-variant
+        :open-modal="openModal"
+        :productId="selectedProductId"
+        :color="selectedColor"
+        :size="selectesSize"
+        @close="handleCloseModal"
+    />
     <div class="container my-5">
         <h3 class="fw-bold mb-4 color-main"><i class="bi bi-cart3 me-2"></i>Giỏ hàng của bạn</h3>
         <div class="row">
@@ -177,7 +214,7 @@ watch(productsSelected, (newSelected) => {
                             <div v-for="cart in carts.cart_item" :key="cart.cart_item_id"
                                 class="cart-item row align-items-center py-3 border-bottom">
                                 <div class="col-1 text-center">
-                                    <input class="form-check-input" type="checkbox" :value="cart.cart_item_id"
+                                    <input class="form-check-input" type="checkbox" :value="cart.variant_id"
                                         v-model="productsSelected">
                                 </div>
                                 <div class="col-2">
@@ -188,7 +225,10 @@ watch(productsSelected, (newSelected) => {
                                     <h6 class="mb-1">{{ cart.variant.product.name }}</h6>
                                     <small class="text-muted mb-1">
                                         Phân loại:
-                                        <span class="border px-2 py-1 rounded-5">
+                                        <span class="border px-2 py-1 rounded-5"
+                                              style="cursor: pointer;"
+                                              @click="handleOpenModal(cart)"
+                                        >
                                             {{ cart.variant.size }},
                                             <span class="d-inline-block align-middle rounded-circle border"
                                                 :style="{ backgroundColor: cart.variant.color, width: '15px', height: '15px' }"></span>
@@ -256,7 +296,10 @@ watch(productsSelected, (newSelected) => {
                             <span class="text-primary">{{ formatCurrency(priceSelector) }}</span>
                         </div>
                         <div class="d-grid mt-4">
-                            <button class="btn bg-main text-white btn-lg">
+                            <button class="btn bg-main text-white btn-lg"
+                                :disabled="productsSelected.length === 0 || carts.cart_item.length === 0"
+                                @click="handleToCheckout"
+                            >
                                 Thanh toán
                             </button>
                         </div>

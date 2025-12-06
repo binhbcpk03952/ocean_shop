@@ -8,7 +8,7 @@ class Addresses extends Model
 {
     protected $table = 'addresses';
     protected $primaryKey = 'address_id';
-    protected $fillable = ['recipient_name', 'recipient_phone', 'street_address', 'ward', 'district', 'province', 'is_default'];
+    protected $fillable = ['user_id' ,'recipient_name', 'recipient_phone', 'street_address', 'ward', 'district', 'province','type', 'is_default'];
 
     public function user()
     {
