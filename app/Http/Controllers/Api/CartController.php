@@ -86,8 +86,9 @@ class CartController extends Controller
             'cartItem' => $cartItem
         ], 200);
     }
-    public function updateVariant(Request $request, $id) {
-        $request -> validate([
+    public function updateVariant(Request $request, $id)
+    {
+        $request->validate([
             'variant_id' => 'required|exists:product_variants,variant_id',
         ]);
 
@@ -103,6 +104,5 @@ class CartController extends Controller
         }
 
         $cartItem->variant_id = $request->variant_id;
-
     }
 }

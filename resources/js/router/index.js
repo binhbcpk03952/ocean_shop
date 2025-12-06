@@ -45,21 +45,25 @@ const routes = [
             {
                 path: '/register',
                 name: 'register',
+                // component: () => import('../pages/Register.vue')
                 component: () => import('../pages/client/Register.vue')
             },
             {
                 path: '/products',
                 name: 'products',
+                // component: () => import('../pages/ProductsListClient.vue')
                 component: () => import('../pages/client/ProductsListClient.vue')
             },
             {
                 path: '/products/:id',
                 name: 'product_detail',
+                // component: () => import('../pages/ProductDetailClient.vue')
                 component: () => import('../pages/client/ProductDetailClient.vue')
             },
             {
                 path: '/carts',
                 name: 'carts',
+                // component: () => import('../pages/CartListClient.vue')
                 component: () => import('../pages/client/CartListClient.vue')
             },
             {

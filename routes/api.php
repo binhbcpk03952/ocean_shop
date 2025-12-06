@@ -5,17 +5,14 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\ProductController;
-use App\Http\Controllers\Api\PostController;
+
 use App\Http\Controllers\Api\CartController;
+use App\Http\Controllers\Api\PostController;
 use App\Http\Controllers\Api\BannerController;
 use App\Http\Controllers\Api\AddressController;
 use App\Http\Controllers\Api\OrderController;
 use App\Http\Controllers\Api\VNPayController;
 
-
-
-
-use App\Models\Order;
 
 // Route đăng ký
 
@@ -46,6 +43,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('categories/{id}', [CategoryController::class, 'destroy']);
 
     // Route cho Giỏ hàng
+    Route::post('cart', [\App\Http\Controllers\Api\CartController::class, 'store']);
+    Route::post('products', [ProductController::class, 'store']);
+    Route::post('carts', [CartController::class, 'store']);
+    Route::get('carts', [CartController::class, 'index']);
     Route::post('products', [ProductController::class, 'store']);
     // Route::post('cart', [CartController::class, 'store']);
     Route::post('carts', [CartController::class, 'store']);
@@ -74,6 +75,7 @@ Route::post('/vnpay_payment', [VNPayController::class, 'createPayment']);
 Route::get('/vnpay/return', [VNPayController::class, 'vnpayReturn']);
 Route::get('banners', [BannerController::class, 'index']);
 Route::get('products', [ProductController::class, 'index']);
+Route::get('products/{id}', [ProductController::class, 'show']);
 Route::get('products/{id}', [ProductController::class, 'show']);
 
 // Route cho Địa chỉ

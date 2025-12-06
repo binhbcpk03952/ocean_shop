@@ -1,8 +1,13 @@
 <script setup>
 import { onMounted, reactive, ref, watch } from "vue";
 import { useRouter, useRoute } from "vue-router";
+<<<<<<< HEAD:resources/js/pages/ProductsListAdmin.vue
+import api from "../axios";
+import ProductDetail from "../components/admin/ProductDetail.vue";
+=======
 import api from "../../axios";
 import ProductDetail from "../../components/admin/ProductDetail.vue";
+>>>>>>> 2d930c301b1b4b55d65bd52695535434ba2c1be7:resources/js/pages/admin/ProductsListAdmin.vue
 const router = useRouter();
 const route = useRoute();
 const products = reactive({
