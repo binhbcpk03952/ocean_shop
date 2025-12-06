@@ -24,17 +24,17 @@ class GeminiAIController extends Controller
             }
 
             /* -----------------------------------------
-             * 1. LỌC SẢN PHẨM
+             * 1. KHỞI TẠO QUERY
              ----------------------------------------- */
             $products = Product::query();
             $filtered = false;
 
-            /* ========= SIZE & GIỚI TÍNH ========= */
+            /* ========= SIZE & GIỚI TÍNH (CHỈ TƯ VẤN) ========= */
             $sizeSuggest = null;
             $height = null;
             $genderFilter = null;
 
-            // ─── PHÂN TÍCH CÂN NẶNG ───
+            // ─── PHÂN TÍCH CÂN NẶNG (CHỈ TƯ VẤN - KHÔNG BẬT FILTER) ───
             if (preg_match('/(\d+)\s*(kg|ký|kilô)/ui', $question, $m)) {
                 $weight = intval($m[1]);
 
@@ -43,8 +43,6 @@ class GeminiAIController extends Controller
                 elseif ($weight < 70) $sizeSuggest = "L";
                 elseif ($weight < 80) $sizeSuggest = "XL";
                 else $sizeSuggest = "XXL";
-
-                $filtered = true;
             }
 
             // ─── PHÂN TÍCH CHIỀU CAO ───
@@ -82,7 +80,6 @@ class GeminiAIController extends Controller
 
             if ($rootCategoryId) {
 
-                // lấy toàn bộ category con có cùng parent
                 $categoryIds = DB::table('categories')
                     ->where('category_id', $rootCategoryId)
                     ->orWhere('parent_id', $rootCategoryId)
@@ -121,7 +118,7 @@ class GeminiAIController extends Controller
                 $filtered = true;
             }
 
-            /* ========= LỌC DƯỚI DẺ ========= */
+            /* ========= LỌC DƯỚI GIÁ ========= */
             if (preg_match('/dưới\s*(\d+(?:[\.,]\d+)*)(\s*(k|nghìn|ngàn|tr|triệu|m)?)/ui', $question, $m)) {
 
                 $num = floatval(str_replace(',', '.', str_replace('.', '', $m[1])));
@@ -153,7 +150,7 @@ class GeminiAIController extends Controller
                 $filtered = true;
             }
 
-            /* ========= HỎI SỐ LƯỢNG SẢN PHẨM ========= */
+            /* ========= HỎI SỐ LƯỢNG ========= */
             if (preg_match('/(bao nhiêu|mấy|số lượng).*sản phẩm/ui', $question)) {
                 $count = Product::count();
                 return response()->json([
@@ -162,11 +159,20 @@ class GeminiAIController extends Controller
                 ]);
             }
 
-            /* KẾT QUẢ LỌC */
-            $foundProducts = $filtered ? $products->get() : Product::all();
+            /* ========= LẤY DỮ LIỆU ========= */
+            $foundProducts = $filtered ? $products->get() : collect();
+
+            /* Nếu không có điều kiện lọc thật (chỉ hỏi size) */
+            if (!$filtered && $sizeSuggest) {
+                return response()->json([
+                    "reply" => "Với chiều cao và cân nặng của bạn, size phù hợp nhất là $sizeSuggest. 
+Bạn có thể cho shop biết thêm bạn muốn tìm áo, quần, nam hay nữ để shop lọc đúng sản phẩm nhé!",
+                    "products" => []
+                ]);
+            }
 
             /* Nếu không có sản phẩm phù hợp */
-            if ($foundProducts->count() === 0) {
+            if ($filtered && $foundProducts->count() === 0) {
                 return response()->json([
                     "reply" => "Xin lỗi bạn. Shop hiện chưa có sản phẩm nào phù hợp với yêu cầu: {$question}.
 Bạn có thể thử đổi khoảng giá, giới tính hoặc loại sản phẩm nhé!",
@@ -194,14 +200,13 @@ Danh sách sản phẩm phù hợp:\n\n";
                 $context .= "Gợi ý size phù hợp: $sizeSuggest.\n\n";
             }
 
-            if ($genderFilter == 'male') $context .= "Khách đang tìm sản phẩm theo nhóm: Nam.\n\n";
-            if ($genderFilter == 'female') $context .= "Khách đang tìm sản phẩm theo nhóm: Nữ.\n\n";
-            if ($genderFilter == 'kid') $context .= "Khách đang tìm sản phẩm theo nhóm: Trẻ em.\n\n";
+            if ($genderFilter == 'male') $context .= "Nhóm sản phẩm: Nam.\n\n";
+            if ($genderFilter == 'female') $context .= "Nhóm sản phẩm: Nữ.\n\n";
+            if ($genderFilter == 'kid') $context .= "Nhóm sản phẩm: Trẻ em.\n\n";
 
             $finalPrompt = $context .
 "Hãy tư vấn sản phẩm phù hợp, dựa trên dữ liệu sản phẩm của shop chúng tôi.
 Câu hỏi của khách: {$question}";
-
 
             /* -----------------------------------------
              * 3. GỌI GEMINI
@@ -223,9 +228,6 @@ Câu hỏi của khách: {$question}";
             $reply = $data['candidates'][0]['content']['parts'][0]['text']
                 ?? "Xin lỗi, tôi chưa thể phản hồi lúc này.";
 
-            /* -----------------------------------------
-             * RETURN
-             ----------------------------------------- */
             return response()->json([
                 "reply" => $reply,
                 "products" => $foundProducts->map(fn ($p) => [
