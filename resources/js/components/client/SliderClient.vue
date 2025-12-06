@@ -53,5 +53,15 @@ onMounted(async () => {
 </template>
 
 <style scoped>
+:deep(.swiper-button-prev) {
+    left: 60px; 
+}
 
+:deep(.swiper-button-next) {
+    right: 60px; 
+}
+:deep(.swiper-button-prev::after), 
+:deep(.swiper-button-next::after) {
+    font-size: 20px; 
+}
 </style>
