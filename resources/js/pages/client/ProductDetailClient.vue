@@ -349,11 +349,19 @@ watch(() => route.params.id, (id) => {
             </div>
         </div>
 
+        <!-- Mô tả sản phầm -->
+
+        <div class="row mt-5 descriptionProduct">
+            <h3 class="mb-4">Mô tả sản phẩm</h3>
+            <p>{{ productDetail.description }}</p>
+        </div>
+
+
         <!-- -----------------------------------------------------------
             ⭐⭐⭐ PHẦN BÌNH LUẬN + ĐÁNH GIÁ
         ------------------------------------------------------------ -->
         <div class="row mt-5">
-            <div class="col-lg-8 mx-auto">
+            <div class="col-lg-8">
 
                 <h3 class="mb-4">Đánh giá sản phẩm</h3>
 
@@ -385,7 +393,7 @@ watch(() => route.params.id, (id) => {
                 </div>
 
                 <!-- LIST REVIEW -->
-                <div class="card p-3">
+                <div class="card p-3 mb-5">
                     <h5 class="mb-3">Tất cả đánh giá</h5>
 
                     <div v-if="!reviews.length" class="text-muted">
@@ -454,4 +462,12 @@ watch(() => route.params.id, (id) => {
     cursor: pointer;
 }
 
+div.descriptionProduct p{
+    line-height: 2;
+}
+div.descriptionProduct{
+    border: 1px solid #ccc;
+    padding: 40px;
+    border-radius: 5px;
+}
 </style>
