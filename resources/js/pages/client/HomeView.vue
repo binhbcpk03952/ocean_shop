@@ -1,6 +1,30 @@
 <script setup>
 import SliderClient from '../../components/client/SliderClient.vue'
 import ChatBoxAI from '../../components/client/ChatBoxAI.vue'
+
+// products list
+import { ref, watch, reactive, onMounted } from 'vue';
+import api from '../../axios';
+import BoxProduct from '../../components/client/BoxProduct.vue';
+const products = ref([])
+
+const handleFetchProducts = async () => {
+    try {
+        const response = await api.get('/products')
+        if (response.status === 200) {
+            products.value = response.data
+        } else {
+            alert('Có lỗi xảy ra, vui lòng thử lại.')
+        }
+    } catch (error) {
+        console.error('Lỗi khi lấy danh sách sản phẩm:', error)
+    }
+}
+
+onMounted(() => {
+    handleFetchProducts()
+})
+
 </script>
 
 <template>
@@ -8,35 +32,18 @@ import ChatBoxAI from '../../components/client/ChatBoxAI.vue'
 
   <div class="container product-list mb-5">
 
-    <div class="text-center mt-5 item">
+    <div class="text-center mt-5 content">
       <h2>ÁO KHOÁC GIÓ ĐA NĂNG</h2>
       <p>Trượt nước - Cản gió - Giữ ấm - Phù hợp với thời tiết!!</p>
     </div>
 
     <div class="row">
-      <div class="col-md-3" v-for="n in 8" :key="n">
-        <div class="product-item">
-          <div class="product-img">
-            <img src="../../../../public/images/product_demo.webp" alt="product_demo" class="w-100">
-          </div>
-
-          <div class="product-info">
-            <div class="price text-danger fw-medium fs-5 mt-3">
-              449.100đ
-            </div>
-            <div class="product-name">
-              Áo Khoác Gió Nữ Gia Đình 3C Promax
-            </div>
-          </div>
-
-          <div class="variant-colors d-flex align-items-center">
-            <button class="btn-color"></button>
-            <button class="btn-color"></button>
-            <button class="btn-color"></button>
-            <button class="btn-color active"></button>
-          </div>
-        </div>
-      </div>
+      <BoxProduct
+      class="col-6 col-md-4 col-lg-3 item"
+                v-for="product in products"
+                :key="product.product_id"
+                :product="product"
+            />
     </div>
 
   </div>
@@ -55,15 +62,14 @@ import ChatBoxAI from '../../components/client/ChatBoxAI.vue'
   margin-right: 5px
 }
 
-.btn-color:nth-child(2) { background-color: #143c39; }
+/* .btn-color:nth-child(2) { background-color: #143c39; }
 .btn-color:nth-child(3) { background-color: #EC873D; }
-.btn-color:nth-child(4) { background-color: #c69a53; }
+.btn-color:nth-child(4) { background-color: #c69a53; } */
 
 .btn-color.active {
   border: 2px solid #3497e0;
 }
 
-div.item {
-  margin: 20px 50px 0px 0px;
-}
+
+
 </style>
