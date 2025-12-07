@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Http\Controllers\Api;
+
 use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
@@ -16,9 +17,52 @@ class ProductController extends Controller
 {
     public function index(Request $request)
     {
-        $products = Product::with(['variant', 'image', 'categories'])->get();
-        return response()->json($products);
+        $query = Product::with(['variant', 'image', 'categories']);
+
+        // --- FILTER THEO GIÁ ---
+        if ($request->price_range) {
+            switch ($request->price_range) {
+                case 'under_100':
+                    $query->where('price', '<', 100000);
+                    break;
+                case '100_1m':
+                    $query->whereBetween('price', [100000, 1000000]);
+                    break;
+                case '1m_5m':
+                    $query->whereBetween('price', [1000000, 5000000]);
+                    break;
+                case 'over_5m':
+                    $query->where('price', '>', 5000000);
+                    break;
+            }
+        }
+
+        // --- FILTER THEO DANH MỤC ---
+        if ($request->category_id) {
+            $query->where('category_id', $request->category_id);
+        }
+
+        // --- FILTER THEO SIZE ---
+        if ($request->size) {
+            $query->whereHas('variant', function ($q) use ($request) {
+                $q->where('size', $request->size);
+            });
+        }
+
+        // --- FILTER ƯU ĐÃI ---
+        if ($request->filter === 'sale') {
+            $query->whereNotNull('sale_price')
+                ->whereColumn('sale_price', '<', 'price');
+        }
+
+        // --- FILTER MỚI NHẤT ---
+        if ($request->filter === 'latest') {
+            $query->orderBy('created_at', 'desc');
+        }
+
+        return response()->json($query->get());
     }
+
     public function show($id)
     {
         return Product::with(['variant', 'image', 'categories'])->findOrFail($id);
