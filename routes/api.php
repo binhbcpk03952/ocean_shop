@@ -2,27 +2,53 @@
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+
+// Controllers
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\ProductController;
-
 use App\Http\Controllers\Api\CartController;
 use App\Http\Controllers\Api\PostController;
 use App\Http\Controllers\Api\BannerController;
 use App\Http\Controllers\Api\AddressController;
 use App\Http\Controllers\Api\OrderController;
 use App\Http\Controllers\Api\VNPayController;
+use App\Http\Controllers\GeminiAIController;
 
 
-// Route đăng ký
+/*
+|--------------------------------------------------------------------------
+| API Routes
+|--------------------------------------------------------------------------
+*/
+
+// 🔹 AUTH PUBLIC ROUTES
+use Illuminate\Support\Facades\Mail;
+
+Route::get('/test-mail', function () {
+    Mail::raw('Test gửi mail thành công', function ($message) {
+        $message->to('binhbcpk03952@gmail.com')
+            ->subject('Test Mail Laravel');
+    });
+
+    return 'Đã gửi mail';
+});
 
 Route::post('/register', [AuthController::class, 'register']);
-Route::post('login', [AuthController::class, 'login']);
+Route::post('/login',     [AuthController::class, 'login']);
 
-// Route cần xác thực (Sử dụng middleware 'auth:sanctum')
+// 🔹 CHAT AI PUBLIC ROUTE
+Route::post('/chat-ai', [GeminiAIController::class, 'chat']);
+
+// 🔹 PRODUCTS PUBLIC ROUTES
+Route::get('/products',          [ProductController::class, 'index']);
+Route::get('/products/{id}',     [ProductController::class, 'show']);
+
+// 🔹 BANNERS PUBLIC ROUTES
+Route::get('/banners', [BannerController::class, 'index']);
+
+// 🔒 PROTECTED ROUTES (LOGIN REQUIRED)
 Route::middleware('auth:sanctum')->group(function () {
-    // Route Đăng xuất
-    Route::post('logout', [AuthController::class, 'logout']);
 
     // Route Lấy thông tin người dùng
     Route::get('users', [AuthController::class, 'users']);
@@ -36,22 +62,18 @@ Route::middleware('auth:sanctum')->group(function () {
 
 
 
-    // route thêm danh mục
-    // route danh sách danh mục
-    Route::get('categories', [CategoryController::class, 'index']);
-    Route::post('categories', [CategoryController::class, 'store']);
-    Route::delete('categories/{id}', [CategoryController::class, 'destroy']);
+    // Categories
+    Route::post('/categories',       [CategoryController::class, 'store']);
+    Route::delete('/categories/{id}', [CategoryController::class, 'destroy']);
 
-    // Route cho Giỏ hàng
-    Route::post('cart', [\App\Http\Controllers\Api\CartController::class, 'store']);
-    Route::post('products', [ProductController::class, 'store']);
-    Route::post('carts', [CartController::class, 'store']);
-    Route::get('carts', [CartController::class, 'index']);
-    Route::post('products', [ProductController::class, 'store']);
-    // Route::post('cart', [CartController::class, 'store']);
-    Route::post('carts', [CartController::class, 'store']);
-    Route::get('carts', [CartController::class, 'index']);
-    Route::put('carts/{id}', [CartController::class, 'updateQuantity']);
+    // Products
+    Route::post('/products', [ProductController::class, 'store']);
+
+    // Cart
+    Route::get('/carts',          [CartController::class, 'index']);
+    Route::post('/carts',         [CartController::class, 'store']);
+    Route::put('/carts/{id}',     [CartController::class, 'updateQuantity']);
+    Route::delete('/carts/{id}', [CartController::class, 'destroy']);
 
     Route::post('posts', [PostController::class, 'store']);
     Route::get('posts', [PostController::class, 'index']);
@@ -70,9 +92,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('orders', [OrderController::class, 'index']);
     Route::post('orders', [OrderController::class, 'store']);
     Route::get('/orders/latest', [OrderController::class, 'getLatestOrder']);
+    Route::post('/vnpay_payment', [VNPayController::class, 'createPayment']);
+    Route::get('/vnpay/return', [VNPayController::class, 'vnpayReturn']);
 });
-Route::post('/vnpay_payment', [VNPayController::class, 'createPayment']);
-Route::get('/vnpay/return', [VNPayController::class, 'vnpayReturn']);
+Route::get('/categories',        [CategoryController::class, 'index']);
 Route::get('banners', [BannerController::class, 'index']);
 Route::get('products', [ProductController::class, 'index']);
 Route::get('products/{id}', [ProductController::class, 'show']);
