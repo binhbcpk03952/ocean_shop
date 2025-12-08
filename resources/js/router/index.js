@@ -84,6 +84,11 @@ const routes = [
                         name: 'address',
                         component: () => import('../pages/client/Address.vue')
                     },
+                    {
+                        path: 'orders',
+                        name: 'orders_profile',
+                        component: () => import('../pages/client/UserOrderHistory.vue')
+                    },
                 ]
             },
 

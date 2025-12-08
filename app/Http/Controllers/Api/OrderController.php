@@ -17,12 +17,12 @@ class OrderController extends Controller
     public function index(Request $request)
     {
         $user_id = $request->user()->user_id;
-        $orders = Order::with(['orderItem.variant.product', 'orderItem.variant.image'])->where('user_id', $user_id)->first();
+        $orders = Order::with(['orderItem.variant.product', 'orderItem.variant.image'])->where('user_id', $user_id)->orderBy('order_id', 'DESC')->get();
         return response()->json($orders);
     }
     public function getAllOrders()
     {
-        $orders = Order::with(['orderItem.variant.product', 'orderItem.variant.image', 'user.addresses'])->get();
+        $orders = Order::with(['orderItem.variant.product', 'orderItem.variant.image', 'addresses', 'user'])->orderBy('order_id', 'DESC')->get();
         return response()->json($orders);
     }
     public function store(Request $request)
@@ -96,10 +96,77 @@ class OrderController extends Controller
                 'message' => 'Không tìm thấy đơn hàng nào'
             ], 404);
         }
-
         return response()->json([
             'message' => 'Lấy đơn hàng mới nhất thành công',
             'order'   => $order
+        ], 200);
+    }
+    public function updateStatus(Request $request, $id)
+    {
+        // 1. Validate dữ liệu đầu vào (chỉ chấp nhận các trạng thái hợp lệ)
+        $request->validate([
+            'status' => 'required|string|in:pending,confirmed,shipping,completed,cancelled,failed',
+        ]);
+
+        try {
+            // 2. Tìm đơn hàng theo ID
+            $order = Order::find($id);
+
+            if (!$order) {
+                return response()->json([
+                    'message' => 'Không tìm thấy đơn hàng',
+                ], 404);
+            }
+
+            // 3. Kiểm tra logic (Tuỳ chọn: Không cho phép sửa nếu đơn đã hoàn thành hoặc đã huỷ)
+            if ($order->status == 'completed' || $order->status == 'cancelled') {
+                return response()->json([
+                    'message' => 'Không thể cập nhật trạng thái cho đơn hàng đã hoàn tất hoặc đã hủy.',
+                ], 400);
+            }
+
+            // 4. Cập nhật trạng thái
+            $old_status = $order->status; // Lưu trạng thái cũ để log nếu cần
+            $order->status = $request->status;
+            $order->save();
+
+            // 5. Trả về kết quả
+            return response()->json([
+                'message'    => 'Cập nhật trạng thái đơn hàng thành công',
+                'order_id'   => $order->order_id,
+                'old_status' => $old_status,
+                'new_status' => $order->status,
+                'updated_at' => $order->updated_at
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Lỗi khi cập nhật trạng thái',
+                'error'   => $e->getMessage(),
+            ], 500);
+        }
+    }
+    public function cancelOrder(Request $request, $id)
+    {
+        $user_id = $request->user()->user_id;
+
+        // Tìm đơn hàng của đúng user đó
+        $order = Order::where('order_id', $id)->where('user_id', $user_id)->first();
+
+        if (!$order) {
+            return response()->json(['message' => 'Đơn hàng không tồn tại hoặc không thuộc về bạn'], 404);
+        }
+
+        // Chỉ cho phép huỷ nếu đơn đang ở trạng thái 'pending'
+        if ($order->status !== 'pending') {
+            return response()->json(['message' => 'Đơn hàng đã được xử lý, không thể hủy lúc này'], 400);
+        }
+
+        $order->status = 'cancelled';
+        $order->save();
+
+        return response()->json([
+            'message' => 'Đã hủy đơn hàng thành công',
+            'order' => $order
         ], 200);
     }
 }

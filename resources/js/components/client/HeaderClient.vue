@@ -3,27 +3,15 @@ import { ref, onMounted, onBeforeUnmount, inject, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import api from '../../axios'; const authStore = inject('auth')
 import CatgoriesListHeader from './CatgoriesListHeader.vue';
+import { emitter } from '../../stores/eventBus';
 const auth = authStore.auth
 const checkLogin = authStore.checkLogin
 
 
-
+const stockInCart = ref(0)
 
 const dropdownRef = ref(null);
 const dropdown = ref(false);
-
-const user = ref(null);
-
-const loadUserData = () => {
-    const userData = localStorage.getItem('user_data');
-    if (userData) {
-        user.value = JSON.parse(userData);
-    }
-};
-
-loadUserData();
-
-
 
 const handleDropdown = () => {
     dropdown.value = !dropdown.value;
@@ -33,9 +21,14 @@ const handleClickOutside = (event) => {
         dropdown.value = false;
     }
 };
-console.log(auth);
+// console.log(auth);
 
-
+const handleFetchStockInCart = async () => {
+    const res = await api.get('/carts')
+    if (res.status === 200) {
+        stockInCart.value = res.data.cart_item?.length || 0
+    }
+}
 const handleLogout = async () => {
     try {
         await api.post('/logout');
@@ -70,9 +63,12 @@ watch(() => route.fullPath, () => {
 //
 onMounted(() => {
     document.addEventListener('click', handleClickOutside);
+    handleFetchStockInCart()
+    emitter.on('update_stock-cart', handleFetchStockInCart)
 });
 onBeforeUnmount(() => {
     document.removeEventListener('click', handleClickOutside);
+    emitter.off('update_stock-cart', handleFetchStockInCart)
 });
 </script>
 
@@ -95,9 +91,9 @@ onBeforeUnmount(() => {
                                 </router-link>
                             </li>
                             <li>
-                                <router-link class="nav-link">Ưu đãi</router-link>
+                                <span to="/sale" class="nav-link">Ưu đãi</span>
                             </li>
-                            <li><router-link class="nav-link">Đồng phục</router-link></li>
+                            <li><span class="nav-link">Đồng phục</span></li>
                             <li><router-link to="/store" class="nav-link">Cửa hàng</router-link></li>
                             <li><router-link to="/blog" class="nav-link">Tin tức</router-link></li>
                         </ul>
@@ -121,8 +117,8 @@ onBeforeUnmount(() => {
 
                             <router-link to="/carts" class="me-2 position-relative">
                                 <i class="bi bi-bag text-black fs-4"></i>
-                                <div class="stock-cart">
-                                    <small>5</small>
+                                <div class="stock-cart" v-if="stockInCart > 0" >
+                                    <small>{{ stockInCart }}</small>
                                 </div>
                             </router-link>
                             <div class="user-login">
@@ -165,10 +161,10 @@ onBeforeUnmount(() => {
                             <i class="bi bi-search fs-5 search-icon"></i>
                         </div>
                         <div class="user-items d-flex align-items-center">
-                            <router-link to="carts" class="me-2 position-relative text-black text-decoration-none">
+                            <router-link to="/carts" class="me-2 position-relative text-black text-decoration-none">
                                 <i class="bi bi-bag fs-4"></i>
                                 <div class="stock-cart">
-                                    <small>5</small>
+                                    <small>{{ stockInCart }}</small>
                                 </div>
                             </router-link>
                             <span><i class="bi bi-person fs-3"></i></span>

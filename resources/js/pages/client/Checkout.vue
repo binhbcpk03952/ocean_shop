@@ -4,6 +4,7 @@ import api from '../../axios';
 import { useRoute, useRouter } from 'vue-router';
 import CreateAddress from './CreateAddress.vue';
 import ModalChangePaymentMethod from '../../components/client/ModalChangePaymentMethod.vue';
+import ModalChangeAddress from '../../components/client/ModalChangeAddress.vue';
 
 // route
 const route = useRoute()
@@ -21,6 +22,18 @@ const handleSaveModal = () => {
 const handleOpenModal = () => {
     openModalAddAddress.value = true
 }
+
+// Thay đổi địa chỉ thanh toán
+const openModalChangeAddress = ref(false)
+const handleCloseModalChangeAddress = () => {
+    openModalChangeAddress.value = false
+}
+const saveModalChangeAddress = (addressId) => {
+    selectAddress.value = addressId
+    openModalChangeAddress.value = false
+    router.push({ query: { ...route.query, address: addressId } })
+}
+
 
 // thay doi phuong thuc thanh toan
 const openModalChangePaymentMethod = ref(false)
@@ -52,6 +65,14 @@ const saveModalMethod = (method) => {
 const address = ref([]);
 const productsInCart = ref([]);
 const selectAddress = ref(null);
+// console.log(route.query.address);
+
+watch(router.query, (newAddres) => {
+    if (route.query.address) {
+        addressDefault.value = newAddres.address
+    }
+})
+
 const form = reactive({
     addressId: '',
     note: '',
@@ -67,7 +88,9 @@ const getFormattedColor = (hex) => {
     // Ngược lại, thêm '#' vào đầu chuỗi
     return '#' + hex;
 };
+const isLoadingAddress = ref(false)
 const handleFetchAddress = async () => {
+    isLoadingAddress.value = true
     try {
         const res = await api.get('/addresses')
         if (res.status === 200) {
@@ -75,6 +98,8 @@ const handleFetchAddress = async () => {
         }
     } catch (err) {
         console.log('Loi khi goi API: ', err);
+    } finally {
+        isLoadingAddress.value = false
     }
 }
 const handleFetchProductsInCart = async () => {
@@ -147,21 +172,21 @@ const formatCurrency = (value) => {
 
 const handleOrder = async () => {
     const orderData = {
-            address_id: addressDefault.value.address_id,
-            note: form.note,
-            total_amount: subtotal.value,
-            shipping_fee: shippingFee.value,
-            payment_method: paymentMe.id,
-            promotion_id: null,
-            discount_amount: 0,
+        address_id: addressDefault.value.address_id,
+        note: form.note,
+        total_amount: subtotal.value,
+        shipping_fee: shippingFee.value,
+        payment_method: paymentMe.id,
+        promotion_id: null,
+        discount_amount: 0,
 
-            products: productsSelected.value.map(item => ({
-                cart_item_id: item.cart_item_id,
-                variant_id: item.variant_id,
-                quantity: item.quantity,
-                price: item.variant?.price ?? item.variant?.product?.price
-            }))
-        }
+        products: productsSelected.value.map(item => ({
+            cart_item_id: item.cart_item_id,
+            variant_id: item.variant_id,
+            quantity: item.quantity,
+            price: item.variant?.price ?? item.variant?.product?.price
+        }))
+    }
     if (paymentMe.id === 'cod') {
         try {
             const res = await api.post('orders', orderData)
@@ -191,6 +216,8 @@ onMounted(() => {
 })
 </script>
 <template>
+    <ModalChangeAddress :open-modal="openModalChangeAddress" :address-id="addressDefault?.address_id"
+        :addresses="address" @close="handleCloseModalChangeAddress" @save="saveModalChangeAddress" />
     <CreateAddress :open-modal="openModalAddAddress" :mode="mode" @close="handleCloseModal" @save="handleSaveModal" />
     <ModalChangePaymentMethod :open-modal="openModalChangePaymentMethod" :method-id="paymentMe.id"
         @close="closeModalPaymentMethod" @save="saveModalMethod" />
@@ -202,30 +229,38 @@ onMounted(() => {
                         <div class="bg-white p-4 rounded-3 border mb-4">
                             <h4 class="mb-4 fw-medium text-dark">Thông tin giao hàng</h4>
                             <div class="row g-3">
-                                <div class="list_address fs-5 fw-medium d-flex justify-content-between my-3"
-                                    v-if="!addressDefault">
-                                    <span> Bạn chưa có địa chỉ nhận hàng</span>
-                                    <button type="button" class="btn bg-main text-white" @click="handleOpenModal">
-                                        Thêm địa chỉ
-                                    </button>
+                                <div class="loading" v-if="isLoadingAddress">
+                                    <div class="spinner-border text-primary" role="status"></div>
+                                    Đang tải địa chỉ...
                                 </div>
-                                <div class="list_address-default d-flex justify-content-between mb-3" v-else>
-                                    <div class="condition">
-                                        <div class="name_phone">
-                                            <span class="recipient_name">{{ addressDefault.recipient_name }}</span> | {{
-                                                addressDefault.recipient_phone }}
-                                        </div>
-                                        <div class="address_line">
-                                            {{ addressDefault.address_line }}
-                                        </div>
-                                        <div class="address">
-                                            {{ addressDefault.ward }}, {{ addressDefault.district }}, {{
-                                                addressDefault.province }}
-                                        </div>
+                                <template v-else>
+                                    <div class="list_address fs-5 fw-medium d-flex justify-content-between my-3"
+                                        v-if="!addressDefault">
+                                        <span> Bạn chưa có địa chỉ nhận hàng</span>
+                                        <button type="button" class="btn bg-main text-white" @click="handleOpenModal">
+                                            Thêm địa chỉ
+                                        </button>
                                     </div>
-                                    <button class="change-address" type="button" @click="showAddress = true">Thay
-                                        đổi</button>
-                                </div>
+                                    <div class="list_address-default d-flex justify-content-between mb-3" v-else>
+                                        <div class="condition">
+                                            <div class="name_phone">
+                                                <span class="recipient_name">{{ addressDefault.recipient_name }}</span>
+                                                | {{
+                                                    addressDefault.recipient_phone }}
+                                            </div>
+                                            <div class="address_line">
+                                                {{ addressDefault.address_line }}
+                                            </div>
+                                            <div class="address">
+                                                {{ addressDefault.ward }}, {{ addressDefault.district }}, {{
+                                                    addressDefault.province }}
+                                            </div>
+                                        </div>
+                                        <button class="change-address" type="button"
+                                            @click="openModalChangeAddress = true">Thay
+                                            đổi</button>
+                                    </div>
+                                </template>
                             </div>
                             <div class="form-floating">
                                 <textarea v-model="form.note" class="form-control" placeholder="Ghi chú"
@@ -439,7 +474,7 @@ onMounted(() => {
     height: 40px;
     border: none;
     background-color: transparent;
-    color: #188754;
+    color: #3497e0;
     font-weight: bold;
 }
 

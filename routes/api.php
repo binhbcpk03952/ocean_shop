@@ -48,7 +48,7 @@ Route::get('/banners', [BannerController::class, 'index']);
 
 // 🔒 PROTECTED ROUTES (LOGIN REQUIRED)
 Route::middleware('auth:sanctum')->group(function () {
-
+    Route::post('/logout',     [AuthController::class, 'logout']);
     // Route Lấy thông tin người dùng
     Route::get('users', [AuthController::class, 'users']);
     Route::put('users/{id}', [AuthController::class, 'update']);
@@ -91,6 +91,13 @@ Route::middleware('auth:sanctum')->group(function () {
     // route thêm đơn hàng
     Route::get('orders', [OrderController::class, 'index']);
     Route::post('orders', [OrderController::class, 'store']);
+    // Route cho Admin cập nhật trạng thái (cần middleware check admin nếu có)
+    Route::post('/update-order-status/{id}', [OrderController::class, 'updateStatus']);
+
+    // Route cho User tự huỷ đơn
+    Route::post('/cancel-order/{id}', [OrderController::class, 'cancelOrder']);
+
+
     Route::get('/orders/latest', [OrderController::class, 'getLatestOrder']);
     Route::post('/vnpay_payment', [VNPayController::class, 'createPayment']);
     Route::get('/vnpay/return', [VNPayController::class, 'vnpayReturn']);

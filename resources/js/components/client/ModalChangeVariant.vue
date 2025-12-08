@@ -4,7 +4,7 @@ import api from '../../axios';
 
 const props = defineProps({
     openModal: Boolean,
-    productId: { type: Number, required: true },
+    productId: Number,
     color: { type: String, default: null },
     size: { type: String, default: null }
 })

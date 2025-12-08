@@ -3,6 +3,7 @@ import { ref, reactive, onMounted, computed, watch } from 'vue';
 import api from '../../axios';
 import ModalChangeVariant from '../../components/client/ModalChangeVariant.vue';
 import ConfirmBox from '../../components/box_alert/ConfirmBox.vue';
+import { emitter } from '../../stores/eventBus';
 import { useRouter, useRoute } from 'vue-router';
 
 const router = useRouter();
@@ -164,6 +165,7 @@ const handleRemoveItem = async (cartId) => {
             productsSelected.value = productsSelected.value.filter(
                 id => id !== cartId
             );
+            emitter.emit('update_stock-cart')
         } else {
             alert('Chưa thể xóa sản phẩm');
         }
@@ -184,8 +186,8 @@ const handleUpdateVariant = async (data) => {
             variant_id: data.variant_id
         });
         if (res.status === 200) {
-            handleCloseModal();
             await handleFetchCarts();
+            handleCloseModal();
         }
     } catch (err) {
         console.error("Cập nhật thất bại");

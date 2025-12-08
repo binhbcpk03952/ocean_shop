@@ -18,10 +18,12 @@ const isAcivePath = (path) => {
                     <span>Thông tin tài khoản</span>
                 </router-link>
 
-                <a href="#" class="list-group-item list-group-item-action py-3 px-4 d-flex align-items-center gap-3 text-dark ">
+                <router-link to="/profile/orders"
+                    class="list-group-item list-group-item-action py-3 px-4 d-flex align-items-center gap-3 text-dark"
+                    :class="{ active_item : isAcivePath('/profile/orders') }">
                     <i class="bi bi-bag-check fs-5"></i>
                     <span>Lịch sử mua hàng</span>
-                </a>
+                </router-link>
 
                 <router-link to="/profile/address"
                 :class="{ active_item : isAcivePath('/profile/address') }"

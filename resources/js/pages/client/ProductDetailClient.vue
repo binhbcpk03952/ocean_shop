@@ -3,6 +3,7 @@ import { ref, onMounted, watch, reactive, computed, inject } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { Toast } from "bootstrap";
 import api from '../../axios';
+import { emitter } from '../../stores/eventBus';
 
 const route = useRoute();
 const router = useRouter();
@@ -202,6 +203,7 @@ const handleAddToCart = async () => {
             showToast("Thêm vào giỏ hàng thành công!");
             cartValue.count = 1;
         }
+        emitter.emit('update_stock-cart')
     } catch (err) {
         showToast("Có lỗi xảy ra!", "danger");
     }
@@ -401,7 +403,7 @@ watch(() => route.params.id, (id) => {
                     </div>
 
                     <div v-for="r in reviews" :key="r.review_id" class="border-bottom py-3">
-                        
+
                         <div class="fw-semibold">{{ r.user.name }}</div>
 
                         <div class="text-warning small">
