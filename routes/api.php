@@ -14,7 +14,7 @@ use App\Http\Controllers\Api\AddressController;
 use App\Http\Controllers\Api\OrderController;
 use App\Http\Controllers\Api\VNPayController;
 use App\Http\Controllers\GeminiAIController;
-
+use App\Http\Controllers\SocialAuthController;
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -45,6 +45,7 @@ Route::get('/products/{id}',     [ProductController::class, 'show']);
 
 // 🔹 BANNERS PUBLIC ROUTES
 Route::get('/banners', [BannerController::class, 'index']);
+
 
 // 🔒 PROTECTED ROUTES (LOGIN REQUIRED)
 Route::middleware('auth:sanctum')->group(function () {
@@ -101,6 +102,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/orders/latest', [OrderController::class, 'getLatestOrder']);
     Route::post('/vnpay_payment', [VNPayController::class, 'createPayment']);
     Route::get('/vnpay/return', [VNPayController::class, 'vnpayReturn']);
+
+    Route::post('/logout', [AuthController::class, 'logout']);
+
 });
 Route::get('/categories',        [CategoryController::class, 'index']);
 Route::get('banners', [BannerController::class, 'index']);
@@ -110,3 +114,6 @@ Route::get('orders_admin', [OrderController::class, 'getAllOrders']);
 Route::get('address/provinces', [AddressController::class, 'getProvinces']);
 Route::get('address/districts/{provinceId}', [AddressController::class, 'getDistricts']);
 Route::get('address/wards/{districtId}', [AddressController::class, 'getWards']);
+
+Route::get('/auth/google', [SocialAuthController::class, 'googleRedirect']);
+Route::get('/auth/google/callback', [SocialAuthController::class, 'googleCallback']);
