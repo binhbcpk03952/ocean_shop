@@ -2,22 +2,64 @@
 
 namespace App\Http\Controllers\Api;
 
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Session;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use App\Models\Order;
+use App\Models\Cart;
+use App\Models\CartItem;
 
 class VNPayController extends Controller
 {
     public function createPayment(Request $request)
     {
+        date_default_timezone_set('Asia/Ho_Chi_Minh');
+        $user_id = $request->user()->user_id;
+        $order = Order::create([
+            'user_id'          => $user_id,
+            'address_id'       => $request->address_id,
+            'note'             => $request->note ?? '',
+            'total_amount'     => $request->total_amount,
+            'shipping_fee'     => $request->shipping_fee,       // ✅ sửa lỗi shpping_fee
+            'payment_method'  => $request->payment_method,
+            'promotion_id'    => $request->promotion_id ?? null,
+            'discount_amount' => $request->discount_amount ?? 0,
+            'final_amount'    => $request->total_amount + $request->shipping_fee - ($request->discount_amount ?? 0),
+            'status'           => 'pending',                     // ✅ thêm status tránh lỗi NOT NULL
+        ]);
+
+        foreach ($request->products as $product) {
+            $order->orderItem()->create([           // ✅ đúng tên quan hệ
+                'variant_id' => $product['variant_id'],
+                'quantity'   => $product['quantity'],
+                'price'      => $product['price'],
+            ]);
+        }
+        DB::commit();
+
+        $vnp_TxnRef = $order->order_id;
+
         $vnp_TmnCode = env('VNP_TMN_CODE');
         $vnp_HashSecret = env('VNP_HASH_SECRET');
         $vnp_Url = env('VNP_URL');
         $vnp_Returnurl = env('VNP_RETURN_URL');
-
-        $vnp_TxnRef = time(); // mã đơn hàng
         $vnp_OrderInfo = "Thanh toan don hang";
         $vnp_OrderType = "billpayment";
-        $vnp_Amount = $request->amount * 100; // nhân 100
+
+        // ✅ TÍNH TIỀN CHUẨN
+        $totalAmount    = (float) ($request->total_amount ?? 0);
+        $shippingFee    = (float) ($request->shipping_fee ?? 0);
+        $discountAmount = (float) ($request->discount_amount ?? 0);
+
+        $vnp_Amount = ($totalAmount + $shippingFee - $discountAmount) * 100;
+
+        if ($vnp_Amount <= 0) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Số tiền thanh toán không hợp lệ'
+            ], 400);
+        }
         $vnp_Locale = "vn";
         $vnp_BankCode = "";
         $vnp_IpAddr = request()->ip();
@@ -55,14 +97,61 @@ class VNPayController extends Controller
 
     public function vnpayReturn(Request $request)
     {
-        $data = $request->all();
+        $order = Order::with('orderItem')->find($request->vnp_TxnRef);
 
-        if ($data['vnp_ResponseCode'] == '00') {
-            // ✅ Thanh toán thành công
-            return redirect('http://localhost:5173/payment-success');
+        if (!$order) {
+            return response()->json(['message' => 'Không tìm thấy đơn hàng'], 404);
+        }
+
+        if ($request->vnp_ResponseCode === '00') {
+
+            DB::beginTransaction();
+
+            try {
+                // ✅ CẬP NHẬT TRẠNG THÁI ĐƠN
+                $order->update(['status' => 'paid']);
+                $cart = Cart::where('user_id', $order->user_id)->first();
+                if ($cart) {
+                    foreach ($order->orderItem as $item) {
+                        CartItem::where('variant_id', $item->variant_id)
+                            ->delete();
+                    }
+                }
+                DB::commit();
+                return response()->json([
+                    'status' => true,
+                    'message' => 'Thanh toán thành công',
+                    'order' => $order
+                ]);
+            } catch (\Exception $e) {
+                DB::rollBack();
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Lỗi xử lý đơn hàng',
+                    'error' => $e->getMessage()
+                ]);
+            }
         } else {
-            // ❌ Thanh toán thất bại
-            return redirect('http://localhost:5173/payment-fail');
+            DB::beginTransaction();
+
+            try {
+                // ✅ XOÁ CHI TIẾT ĐƠN
+                $order->orderItem()->delete();
+                // ✅ XOÁ ĐƠN
+                $order->delete();
+                DB::commit();
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Thanh toán thất bại'
+                ]);
+            } catch (\Exception $e) {
+                DB::rollBack();
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Lỗi khi huỷ đơn',
+                    'error' => $e->getMessage()
+                ]);
+            }
         }
     }
 }

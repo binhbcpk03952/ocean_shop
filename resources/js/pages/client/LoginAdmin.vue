@@ -75,7 +75,7 @@ const handleLogin = async () => {
 
                                 <div class="text-center mb-4">
                                     <h3 class="fw-bold brand-color ls-2 d-flex align-items-center justify-content-center">
-                                        <img src="../../../public/logo_ocean_mini.png" alt="logo" style="height: 40px; width: 40px;" />
+                                        <img src="../../../../public/images/logo_ocean_mini.png" alt="logo" style="height: 40px; width: 40px;" />
                                         <span class="text-uppercase ms-1">Ocean</span>
                                     </h3>
                                     <p class="text-muted small">Vui lòng đăng nhập tài khoản</p>

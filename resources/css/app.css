@@ -42,5 +42,5 @@
     background-color: var(--color) !important;
 }
 .border-main {
-    border: #3497E0 1px solid;
+    border: #3497E0 1px solid !important;
 }

@@ -9,16 +9,14 @@ onMounted(async () => {
     const queryString = window.location.search;
     const apiUrl = "/vnpay/return" + queryString;
 
-    const res = await api.get(apiUrl, {
-        withCredentials: true
-    });
+    const res = await api.get(apiUrl);
 
-    if (res.status === 200) {
-        alert(res.data.message || "Thanh toán thành công!");
-        router.push('/order_success')
+    if (res.status === 200 && res.data.status) {
+       console.log(res.data.data);
+        router.push('/orders_success')
     } else {
         alert(res.data.message || "Thanh toán thất bại! Thanh toán lại");
-        router.push('/checkout')
+        router.push('/carts')
     }
 });
 </script>

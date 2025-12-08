@@ -8,6 +8,9 @@ use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\CartItem;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\OrderSuccessMail;
+
 
 class OrderController extends Controller
 {
@@ -17,7 +20,11 @@ class OrderController extends Controller
         $orders = Order::with(['orderItem.variant.product', 'orderItem.variant.image'])->where('user_id', $user_id)->first();
         return response()->json($orders);
     }
-
+    public function getAllOrders()
+    {
+        $orders = Order::with(['orderItem.variant.product', 'orderItem.variant.image', 'user.addresses'])->get();
+        return response()->json($orders);
+    }
     public function store(Request $request)
     {
 
@@ -60,6 +67,8 @@ class OrderController extends Controller
 
 
             DB::commit();
+            $mail = $request->user()->email;
+            Mail::to($mail)->send(new OrderSuccessMail($order));
             return response()->json([
                 'message' => 'Đặt hàng thành công',
                 'order'   => $order,
@@ -77,7 +86,7 @@ class OrderController extends Controller
     {
         $user_id = $request->user()->user_id;
 
-        $order = Order::with(['orderItem.variant.product', ]) // load full chi tiết
+        $order = Order::with(['orderItem.variant.product',]) // load full chi tiết
             ->where('user_id', $user_id)
             ->orderByDesc('order_id') // hoặc created_at
             ->first();

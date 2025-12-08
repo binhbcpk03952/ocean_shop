@@ -100,7 +100,7 @@ const productsSelected = computed(() => {
         return productsInCart.value;
     }
     return productsInCart.value.filter(item =>
-        ids.includes(item.variant_id)
+        ids.includes(item.cart_item_id)
     );
 });
 
@@ -146,40 +146,36 @@ const formatCurrency = (value) => {
 };
 
 const handleOrder = async () => {
+    const orderData = {
+            address_id: addressDefault.value.address_id,
+            note: form.note,
+            total_amount: subtotal.value,
+            shipping_fee: shippingFee.value,
+            payment_method: paymentMe.id,
+            promotion_id: null,
+            discount_amount: 0,
+
+            products: productsSelected.value.map(item => ({
+                cart_item_id: item.cart_item_id,
+                variant_id: item.variant_id,
+                quantity: item.quantity,
+                price: item.variant?.price ?? item.variant?.product?.price
+            }))
+        }
     if (paymentMe.id === 'cod') {
         try {
-            const res = await api.post('orders', {
-                address_id: addressDefault.value.address_id,
-                note: form.note,
-                total_amount: subtotal.value,
-                shipping_fee: shippingFee.value,
-                payment_method: paymentMe.id,
-                promotion_id: null,
-                discount_amount: 0,
-
-                products: productsSelected.value.map(item => ({
-                    cart_item_id: item.cart_item_id,
-                    variant_id: item.variant_id,
-                    quantity: item.quantity,
-                    price: item.variant?.price ?? item.variant?.product?.price
-                }))
-            })
-
+            const res = await api.post('orders', orderData)
             console.log('Đặt hàng thành công:', res.data)
-            alert('Đặt hàng thành công:')
             router.push('orders_success')
 
         } catch (err) {
             console.log('Lỗi khi gọi API:', err.response?.data || err)
         }
     } else if (paymentMe.id === 'vnpay') {
-        alert('Thanh toan VNPay')
         try {
-            const res = await api.post('/vnpay_payment', {
-                amount: subtotal.value
-            })
+            const res = await api.post('/vnpay_payment', orderData)
             if (res.data.payment_url) {
-                 console.log(res.data.payment_url);
+                console.log(res.data.payment_url);
                 window.location.href = res.data.payment_url
             }
         } catch (err) {
@@ -195,9 +191,9 @@ onMounted(() => {
 })
 </script>
 <template>
-    <CreateAddress :open-modal="openModalAddAddress" :mode="mode" @close="handleCloseModal"
-        @save="handleSaveModal" />
-    <ModalChangePaymentMethod :open-modal="openModalChangePaymentMethod" :method-id="paymentMe.id" @close="closeModalPaymentMethod" @save="saveModalMethod"/>
+    <CreateAddress :open-modal="openModalAddAddress" :mode="mode" @close="handleCloseModal" @save="handleSaveModal" />
+    <ModalChangePaymentMethod :open-modal="openModalChangePaymentMethod" :method-id="paymentMe.id"
+        @close="closeModalPaymentMethod" @save="saveModalMethod" />
     <div class="checkout-page py-5 bg-light min-vh-100">
         <div class="container">
             <form @submit.prevent="handleOrder">
@@ -206,12 +202,10 @@ onMounted(() => {
                         <div class="bg-white p-4 rounded-3 border mb-4">
                             <h4 class="mb-4 fw-medium text-dark">Thông tin giao hàng</h4>
                             <div class="row g-3">
-                                <div class="list_address fs-5 fw-medium d-flex justify-content-between my-3" v-if="!addressDefault">
+                                <div class="list_address fs-5 fw-medium d-flex justify-content-between my-3"
+                                    v-if="!addressDefault">
                                     <span> Bạn chưa có địa chỉ nhận hàng</span>
-                                    <button type="button"
-                                        class="btn bg-main text-white"
-                                        @click="handleOpenModal"
-                                    >
+                                    <button type="button" class="btn bg-main text-white" @click="handleOpenModal">
                                         Thêm địa chỉ
                                     </button>
                                 </div>

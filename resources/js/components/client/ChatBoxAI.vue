@@ -61,7 +61,7 @@ const sendMessage = async () => {
 
 <template>
   <div class="chatbox-wrapper">
-    
+
     <!-- Nút mở -->
     <button class="chat-toggle" @click="toggleChat">
       <i class="bi bi-chat-dots-fill"></i>
@@ -69,9 +69,9 @@ const sendMessage = async () => {
 
     <!-- Chatbox -->
     <div v-if="open" class="chatbox">
-      
+
       <!-- Header -->
-      <div class="chat-header">
+      <div class="chat-header" style="z-index: 2000;">
         <div class="title">
           <i class="bi bi-robot"></i> AI Hỗ Trợ
         </div>
@@ -81,9 +81,9 @@ const sendMessage = async () => {
       <!-- Messages -->
       <div class="messages" ref="scrollBox">
 
-        <div 
-          v-for="(msg, i) in messages" 
-          :key="i" 
+        <div
+          v-for="(msg, i) in messages"
+          :key="i"
           class="message-block"
         >
           <div :class="['msg-item', msg.from]">
@@ -115,8 +115,8 @@ const sendMessage = async () => {
 
       <!-- Input -->
       <div class="input-box">
-        <input 
-          v-model="message" 
+        <input
+          v-model="message"
           @keyup.enter="sendMessage"
           placeholder="Nhập tin nhắn..."
         />
