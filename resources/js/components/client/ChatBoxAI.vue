@@ -1,5 +1,5 @@
 <script setup>
-import { ref, nextTick } from 'vue'
+import { ref, nextTick, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import api from '../../axios'
 
@@ -11,6 +11,27 @@ const loading = ref(false)
 const scrollBox = ref(null)
 
 const goToDetail = (id) => router.push(`/products/${id}`)
+
+/* =========================
+   LOAD CHAT KHI RELOAD
+========================= */
+onMounted(() => {
+  const savedMessages = localStorage.getItem('chat_messages')
+  if (savedMessages) {
+    messages.value = JSON.parse(savedMessages)
+  }
+})
+
+/* =========================
+   TỰ ĐỘNG LƯU KHI CÓ THAY ĐỔI
+========================= */
+watch(
+  messages,
+  (newVal) => {
+    localStorage.setItem('chat_messages', JSON.stringify(newVal))
+  },
+  { deep: true }
+)
 
 const scrollToBottom = () => {
   nextTick(() => {
@@ -45,17 +66,33 @@ const sendMessage = async () => {
 
   loading.value = true
 
-  const res = await api.post('/chat-ai', { message: userMsg })
+  try {
+    const res = await api.post('/chat-ai', { message: userMsg })
 
-  loading.value = false
+    loading.value = false
 
-  messages.value.push({
-    from: 'bot',
-    text: res.data.reply,
-    products: res.data.products || []
-  })
+    messages.value.push({
+      from: 'bot',
+      text: res.data.reply,
+      products: res.data.products || []
+    })
 
-  scrollToBottom()
+    scrollToBottom()
+  } catch (err) {
+    loading.value = false
+    messages.value.push({
+      from: 'bot',
+      text: 'Xin lỗi, hiện tại hệ thống đang gặp lỗi. Vui lòng thử lại sau.'
+    })
+  }
+}
+
+/* =========================
+   NÚT XÓA CHAT (OPTIONAL)
+========================= */
+const clearChat = () => {
+  messages.value = []
+  localStorage.removeItem('chat_messages')
 }
 </script>
 
@@ -75,7 +112,10 @@ const sendMessage = async () => {
         <div class="title">
           <i class="bi bi-robot"></i> AI Hỗ Trợ
         </div>
-        <span class="close-btn" @click="open = false">✖</span>
+        <div>
+          <span class="clear-btn" @click="clearChat">🗑</span>
+          <span class="close-btn" @click="open = false">✖</span>
+        </div>
       </div>
 
       <!-- Messages -->
@@ -199,8 +239,10 @@ const sendMessage = async () => {
   align-items: center;
 }
 
-.close-btn {
+.close-btn,
+.clear-btn {
   cursor: pointer;
+  margin-left: 10px;
 }
 
 /* ===============================
