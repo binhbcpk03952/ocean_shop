@@ -165,7 +165,7 @@ class GeminiAIController extends Controller
             /* Nếu không có điều kiện lọc thật (chỉ hỏi size) */
             if (!$filtered && $sizeSuggest) {
                 return response()->json([
-                    "reply" => "Với chiều cao và cân nặng của bạn, size phù hợp nhất là $sizeSuggest. 
+                    "reply" => "Với chiều cao và cân nặng của bạn, size phù hợp nhất là $sizeSuggest.
 Bạn có thể cho shop biết thêm bạn muốn tìm áo, quần, nam hay nữ để shop lọc đúng sản phẩm nhé!",
                     "products" => []
                 ]);

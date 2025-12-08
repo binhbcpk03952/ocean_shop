@@ -72,6 +72,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/carts',          [CartController::class, 'index']);
     Route::post('/carts',         [CartController::class, 'store']);
     Route::put('/carts/{id}',     [CartController::class, 'updateQuantity']);
+    Route::patch('/carts/{id}',     [CartController::class, 'updateVariant']);
     Route::delete('/carts/{id}', [CartController::class, 'destroy']);
 
     Route::post('posts', [PostController::class, 'store']);
@@ -96,9 +97,7 @@ Route::middleware('auth:sanctum')->group(function () {
 });
 Route::get('/categories',        [CategoryController::class, 'index']);
 Route::get('banners', [BannerController::class, 'index']);
-Route::get('products', [ProductController::class, 'index']);
-Route::get('products/{id}', [ProductController::class, 'show']);
-Route::get('products/{id}', [ProductController::class, 'show']);
+Route::get('orders_admin', [OrderController::class, 'getAllOrders']);
 
 // Route cho Địa chỉ
 Route::get('address/provinces', [AddressController::class, 'getProvinces']);

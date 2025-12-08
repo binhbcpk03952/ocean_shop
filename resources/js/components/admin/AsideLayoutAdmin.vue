@@ -35,7 +35,10 @@ const isActive = (path) => {
                     <router-link to="/admin/banners" class="text-white text-decoration-none"
                         :class="{ activepage: isActive('/admin/banners') }">Banner</router-link>
                 </li>
-                <li class="mt-4">Hoá đơn</li>
+                <li class="mt-4">
+                    <router-link to="/admin/orders" class="text-white text-decoration-none"
+                        :class="{ activepage: isActive('/admin/orders') }">Hoá đơn</router-link>
+                </li>
                 <li class="mt-4">
                     <router-link to="/admin/users" class="text-white text-decoration-none"
                         :class="{ activepage: isActive('/admin/users') }">Người dùng</router-link>

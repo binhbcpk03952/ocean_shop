@@ -117,16 +117,16 @@ onBeforeUnmount(() => {
                             </button>
                         </div>
 
-                        <div class="user d-flex align-items-center">
+                        <div class="user d-flex align-items-center" v-if="auth.loggedIn">
+
                             <router-link to="/carts" class="me-2 position-relative">
                                 <i class="bi bi-bag text-black fs-4"></i>
                                 <div class="stock-cart">
                                     <small>5</small>
                                 </div>
                             </router-link>
-
                             <div class="user-login">
-                                <span class="logged-in" v-if="auth.loggedIn" @click="handleDropdown" ref="dropdownRef">
+                                <span class="logged-in" @click="handleDropdown" ref="dropdownRef">
                                     <i class="bi bi-person fs-3"></i>
 
                                     <div class="drop-down py-1" v-show="dropdown" style="z-index: 1030;">
@@ -139,11 +139,12 @@ onBeforeUnmount(() => {
                                     </div>
                                 </span>
 
-                                <router-link to="/login" v-else>
-                                    <i class="bi bi-person fs-3"></i>
-                                </router-link>
                             </div>
                         </div>
+                        <router-link to="/login" v-else class="d-flex align-items-center text-black text-decoration-none rounded-5 px-2 color-main">
+                            <i class="bi bi-person fs-5 me-1"></i>
+                            <span class="">Đăng nhập</span>
+                        </router-link>
                     </div>
                 </div>
             </div>
@@ -178,7 +179,7 @@ onBeforeUnmount(() => {
                         <ul class="d-flex nav-items">
                             <li class="nav-link">
                                 <span class="btn btn-color fs-5">
-                                 🆕   BST THU ĐÔNG
+                                    🆕 BST THU ĐÔNG
                                 </span>
                             </li>
                             <li class="nav-link">
@@ -204,7 +205,7 @@ onBeforeUnmount(() => {
                             <li class="nav-link">
                                 <span class="btn btn-color fs-5">
                                     <i class="bi bi-tags"></i>
-                                     ƯU ĐÃI
+                                    ƯU ĐÃI
                                 </span>
                             </li>
                         </ul>
@@ -316,6 +317,7 @@ ul.nav-items li {
 .btn-color {
     background-color: rgba(210, 207, 207, 0.5);
 }
+
 .btn-color:hover {
     background-color: #3497E0;
     color: white;

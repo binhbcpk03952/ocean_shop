@@ -2,7 +2,6 @@ import { createRouter, createWebHistory } from "vue-router";
 import AdminLayout from "../layouts/AdminLayout.vue";
 import ClientLayout from "../layouts/ClientLayout.vue";
 import ProfileLayout from "../layouts/ProfileLayout.vue";
-import namespace from "quill/core/logger";
 const routes = [
     {
         path: '/',
@@ -159,6 +158,11 @@ const routes = [
                 path: 'users',
                 name: 'admin_users',
                 component: () => import('../pages/admin/UserListAdmin.vue')
+            },
+            {
+                path: 'orders',
+                name: 'admin_orders',
+                component: () => import('../pages/admin/OrderListAdmin.vue')
             }
         ],
     }
