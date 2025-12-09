@@ -2,6 +2,7 @@
 import { ref, computed, onMounted } from 'vue';
 import api from '../../axios'; // Import axios config của bạn
 import { useRouter, useRoute } from 'vue-router';
+import ModalReviewProduct from '../../components/client/ModalReviewProduct.vue';
 // ROUTER
 const router = useRouter();
 const route = useRoute()
@@ -104,12 +105,32 @@ const getFormattedColor = (hex) => {
     return '#' + hex;
 };
 
+const showReviewModal = ref(false);
+const selectedProductToReview = ref(null);
+
+// Hàm được gọi khi bấm nút "Đánh giá" ở list đơn hàng
+const openReviewModal = (item) => {
+    selectedProductToReview.value = {
+        product_id: item.variant?.product?.product_id, // Lấy ID sản phẩm gốc
+        name: item.variant?.product?.name,
+        // Sử dụng lại hàm getProductImage có sẵn để lấy ảnh
+        image_url: getProductImage(item),
+        color: item.variant?.color,
+        size: item.variant?.size,
+        variant_id: item.variant_id // Nếu cần gửi cả variant_id
+    };
+    showReviewModal.value = true;
+};
 onMounted(() => {
     fetchOrders();
 });
 </script>
 
 <template>
+    <ModalReviewProduct
+            v-model="showReviewModal"
+            :product="selectedProductToReview"
+        />
     <div class="order-history-page bg-light min-vh-100 pb-3">
         <div class="container">
 
@@ -191,6 +212,10 @@ onMounted(() => {
                                     </span>
                                 </div>
                             </div>
+                            <template v-if="['completed', 'cancelled'].includes(order.status)">
+                                <button v-if="order.status === 'completed'" @click="openReviewModal(item)" class="btn btn-outline-brand px-4 min-w-btn">Đánh giá</button>
+                                <button class="btn btn-brand text-white px-4 min-w-btn">Mua lại</button>
+                            </template>
                         </div>
                     </div>
 
@@ -213,10 +238,6 @@ onMounted(() => {
                                 Đã nhận hàng
                             </button>
 
-                            <template v-if="['completed', 'cancelled'].includes(order.status)">
-                                <button v-if="order.status === 'completed'" class="btn btn-outline-brand px-4 min-w-btn">Đánh giá</button>
-                                <button class="btn btn-brand text-white px-4 min-w-btn">Mua lại</button>
-                            </template>
                         </div>
                     </div>
                 </div>

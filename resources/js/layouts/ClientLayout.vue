@@ -8,6 +8,6 @@ import FooterLayoutClient from '../components/client/FooterLayoutClient.vue';
         <main>
             <router-view />
         </main>
-        <FooterLayoutClient/>
+        <FooterLayoutClient />
     </div>
 </template>

@@ -15,6 +15,7 @@ use App\Http\Controllers\Api\OrderController;
 use App\Http\Controllers\Api\VNPayController;
 use App\Http\Controllers\GeminiAIController;
 use App\Http\Controllers\SocialAuthController;
+use App\Http\Controllers\Api\ReviewController;
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -104,8 +105,12 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/vnpay/return', [VNPayController::class, 'vnpayReturn']);
 
     Route::post('/logout', [AuthController::class, 'logout']);
-
+    // Danh gia san pham
+    Route::post('/reviews', [ReviewController::class, 'store']);
+    Route::get('/reviews/{id}', [ReviewController::class, 'index']);
 });
+
+
 Route::get('/categories',        [CategoryController::class, 'index']);
 Route::get('banners', [BannerController::class, 'index']);
 Route::get('orders_admin', [OrderController::class, 'getAllOrders']);

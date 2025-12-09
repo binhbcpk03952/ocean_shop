@@ -43,7 +43,7 @@ const imageWithVariant = computed(() => {
     if (mainImage) return mainImage.image_url;
     return props.product.image[0]?.image_url || null;
 });
-console.log(imageWithVariant.value);
+// console.log(imageWithVariant.value);
 
 
 // ✅ Gửi sự kiện khi bấm vào icon

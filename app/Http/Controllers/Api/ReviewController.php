@@ -10,16 +10,20 @@ use Illuminate\Support\Facades\Auth;
 class ReviewController extends Controller
 {
     // Lấy review theo product
-    public function getByProduct($productId)
+    public function index($productId)
     {
-        $reviews = Review::where('product_id', $productId)
-            ->where('status', 'approved')
-            ->with(['user:user_id,name'])   // load user
-            ->orderBy('review_id', 'DESC')
+        $reviews = Review::with('user')   // nếu muốn lấy thông tin user đã review
+            ->where('product_id', $productId)
+            ->orderBy('created_at', 'desc')
             ->get();
 
-        return response()->json($reviews);
+        return response()->json([
+            'product_id' => $productId,
+            'total_reviews' => $reviews->count(),
+            'reviews' => $reviews
+        ]);
     }
+
 
     // Tạo review (chỉ 1 lần)
     public function store(Request $request)
@@ -32,8 +36,8 @@ class ReviewController extends Controller
 
         // Check user đã đánh giá chưa
         $exists = Review::where('user_id', Auth::id())
-                        ->where('product_id', $request->product_id)
-                        ->first();
+            ->where('product_id', $request->product_id)
+            ->first();
 
         if ($exists) {
             return response()->json([
