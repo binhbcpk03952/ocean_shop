@@ -20,13 +20,16 @@ const isActive = (path) => {
                     <router-link to="/admin/products" class="text-white text-decoration-none"
                         :class="{ activepage: isActive('/admin/products') }">Sản phẩm</router-link>
                 </li>
-                <li class="mt-4">Thương hiệu</li>
+
                 <li class="mt-4">
                     <router-link to="/admin/categories" class="text-white text-decoration-none"
                         :class="{ activepage: isActive('/admin/categories') }">Danh
                         mục</router-link>
                 </li>
-                <li class="mt-4">Voucher</li>
+                <li class="mt-4">
+                    <router-link to="/admin/vouchers" class="text-white text-decoration-none"
+                        :class="{ activepage: isActive('/admin/vouchers') }">Khuyến mãi</router-link>
+                </li>
                 <li class="mt-4">
                     <router-link to="/admin/posts" class="text-white text-decoration-none"
                         :class="{ activepage: isActive('/admin/posts') }">Bài viết</router-link>
@@ -43,7 +46,7 @@ const isActive = (path) => {
                     <router-link to="/admin/users" class="text-white text-decoration-none"
                         :class="{ activepage: isActive('/admin/users') }">Người dùng</router-link>
                 </li>
-                <li class="mt-4">Thống kê</li>
+
                 <li class="mt-4">Danh sách đen</li>
             </ul>
         </div>

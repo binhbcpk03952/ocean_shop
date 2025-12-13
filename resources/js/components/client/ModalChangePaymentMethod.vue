@@ -21,7 +21,7 @@ const paymentMethod = ref([
     {
         id: 'vnpay',
         method_name: 'Thanh toán VN Pay',
-        icon: 'bi bi-qr-code-scan',
+        icon: 'bi bi-qr-code-scan text-danger',
     }
 ])
 const closeModal = () => {
@@ -69,9 +69,9 @@ const closeModal = () => {
     </div>
 </template>
 <style>
-    .modal-body {
+    /* .modal-body {
         height: 300px;
         max-height: 300px;
         overflow-y: auto;
-    }
+    } */
 </style>

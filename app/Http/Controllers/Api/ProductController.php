@@ -19,46 +19,46 @@ class ProductController extends Controller
     {
         $query = Product::with(['variant', 'image', 'categories']);
 
-        // --- FILTER THEO GIÁ ---
-        if ($request->price_range) {
-            switch ($request->price_range) {
-                case 'under_100':
-                    $query->where('price', '<', 100000);
-                    break;
-                case '100_1m':
-                    $query->whereBetween('price', [100000, 1000000]);
-                    break;
-                case '1m_5m':
-                    $query->whereBetween('price', [1000000, 5000000]);
-                    break;
-                case 'over_5m':
-                    $query->where('price', '>', 5000000);
-                    break;
-            }
-        }
+        // // --- FILTER THEO GIÁ ---
+        // if ($request->price_range) {
+        //     switch ($request->price_range) {
+        //         case 'under_100':
+        //             $query->where('price', '<', 100000);
+        //             break;
+        //         case '100_1m':
+        //             $query->whereBetween('price', [100000, 1000000]);
+        //             break;
+        //         case '1m_5m':
+        //             $query->whereBetween('price', [1000000, 5000000]);
+        //             break;
+        //         case 'over_5m':
+        //             $query->where('price', '>', 5000000);
+        //             break;
+        //     }
+        // }
 
-        // --- FILTER THEO DANH MỤC ---
-        if ($request->category_id) {
-            $query->where('category_id', $request->category_id);
-        }
+        // // --- FILTER THEO DANH MỤC ---
+        // if ($request->category_id) {
+        //     $query->where('category_id', $request->category_id);
+        // }
 
-        // --- FILTER THEO SIZE ---
-        if ($request->size) {
-            $query->whereHas('variant', function ($q) use ($request) {
-                $q->where('size', $request->size);
-            });
-        }
+        // // --- FILTER THEO SIZE ---
+        // if ($request->size) {
+        //     $query->whereHas('variant', function ($q) use ($request) {
+        //         $q->where('size', $request->size);
+        //     });
+        // }
 
-        // --- FILTER ƯU ĐÃI ---
-        if ($request->filter === 'sale') {
-            $query->whereNotNull('sale_price')
-                ->whereColumn('sale_price', '<', 'price');
-        }
+        // // --- FILTER ƯU ĐÃI ---
+        // if ($request->filter === 'sale') {
+        //     $query->whereNotNull('sale_price')
+        //         ->whereColumn('sale_price', '<', 'price');
+        // }
 
-        // --- FILTER MỚI NHẤT ---
-        if ($request->filter === 'latest') {
-            $query->orderBy('created_at', 'desc');
-        }
+        // // --- FILTER MỚI NHẤT ---
+        // if ($request->filter === 'latest') {
+        //     $query->orderBy('created_at', 'desc');
+        // }
 
         return response()->json($query->get());
     }
@@ -164,5 +164,26 @@ class ProductController extends Controller
             ], 500);
         }
     }
+
+    public function relatedProducts($id)
+{
+    // Lấy sản phẩm gốc
+    $product = Product::findOrFail($id);
+
+    // Lấy sản phẩm liên quan cùng danh mục
+    $related = Product::whereHas('categories', function($query) use ($product) {
+        $query->whereIn('category_id', $product->categories->pluck('category_id'));
+    })
+    ->where('product_id', '!=', $product->product_id)
+    ->with(['variant', 'image', 'categories'])
+    ->limit(4)
+    ->get();
+
+    return response()->json([
+        'success' => true,
+        'data' => $related
+    ]);
+}
+
 
 }

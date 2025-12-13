@@ -4,6 +4,7 @@ import { useRoute, useRouter } from 'vue-router';
 import { Toast } from "bootstrap";
 import api from '../../axios';
 import { emitter } from '../../stores/eventBus';
+import BoxProduct from '../../components/client/BoxProduct.vue';
 
 const route = useRoute();
 const router = useRouter();
@@ -12,7 +13,19 @@ const productId = ref(route.params.id);
 
 // Modal đăng nhập
 const showLoginModal = ref(false);
+// products related
+const productRelated = ref([])
+const handleFetchProductsRelated = async (id) => {
+    try {
+        const res = await api.get(`/products/${id}/related`)
+        if (res.status === 200) {
+            productRelated.value = res.data?.data
+        }
+    } catch (err) {
+        console.log('Loi khi goi APi: ', err);
 
+    }
+}
 // Product Detail
 const productDetail = ref(null);
 const handleFetchProductDetailById = async (id) => {
@@ -170,8 +183,35 @@ const handleAddToCart = async () => {
 const goToLogin = () => { showLoginModal.value = false; router.push("/login?back=products/" + productId.value); };
 const closeModal = () => showLoginModal.value = false;
 
-onMounted(() => { handleFetchProductDetailById(productId.value); fetchReviews(); });
-watch(() => route.params.id, (id) => { handleFetchProductDetailById(id); fetchReviews(); });
+
+const resetState = () => {
+    productDetail.value = null;
+    selectedColor.value = null;
+    selectedSize.value = null;
+    currentDisplayImage.value = null;
+    reviews.value = [];
+    myReview.value = null;
+    cartValue.count = 1;
+};
+
+watch(
+    () => route.params.id,
+    (id) => {
+        productId.value = id;
+        resetState();
+        handleFetchProductDetailById(id);
+        handleFetchProductsRelated(id);
+        fetchReviews();
+        showDescription.value = false;
+    }
+);
+
+onMounted(() => {
+    // productDetail.value = null
+    handleFetchProductDetailById(productId.value);
+    handleFetchProductsRelated(productId.value)
+    fetchReviews();
+});
 const formatDate = (dateString) => {
     const d = new Date(dateString);
     return d.toLocaleString("vi-VN", {
@@ -182,6 +222,9 @@ const formatDate = (dateString) => {
         minute: "2-digit"
     });
 };
+
+// dropdown chi tiet san pham
+const showDescription = ref(false)
 
 </script>
 
@@ -277,9 +320,18 @@ const formatDate = (dateString) => {
             </div>
         </div>
 
-        <div class="col-lg-6 mt-5 descriptionProduct">
-            <h3 class="mb-4">Mô tả sản phẩm</h3>
-            <p>{{ productDetail.description }}</p>
+        <div class="col-lg-6 mt-5 border p-3 rounded-3">
+            <div class="d-flex justify-content-between">
+                <h3 class="color-main">Mô tả sản phẩm</h3>
+                <i class="bi bi-plus-circle-fill fs-3 color-main" @click="showDescription = !showDescription"></i>
+            </div>
+
+            <!-- Transition -->
+            <transition name="fade-slide">
+                <p v-if="showDescription" class="mt-4">
+                    {{ productDetail.description }}
+                </p>
+            </transition>
         </div>
 
         <div class="row mt-5">
@@ -320,7 +372,14 @@ const formatDate = (dateString) => {
                         </div>
                     </div>
                 </div>
+
             </div>
+        </div>
+        <div class="row">
+            <h2>Sản phẩm liên quan</h2>
+            <BoxProduct v-for="product in productRelated" :key="product.product_id" :product="product"
+                class="col-6 col-md-4 col-lg-3" />
+
         </div>
     </div>
 </template>
@@ -361,11 +420,11 @@ div.descriptionProduct p {
     line-height: 2;
 }
 
-div.descriptionProduct {
+/* div.descriptionProduct {
     border: 1px solid #ccc;
     padding: 40px;
     border-radius: 5px;
-}
+} */
 
 /* CSS Mới cho layout ảnh */
 .thumbnail-scroll {
@@ -423,4 +482,21 @@ div.descriptionProduct {
 .btn-delete-review {
     margin-top: 8px;
 }
+.fade-slide-enter-active,
+.fade-slide-leave-active {
+    transition: all 0.35s ease-in-out;
+}
+
+.fade-slide-enter-from,
+.fade-slide-leave-to {
+    opacity: 0;
+    transform: translateY(-10px);
+}
+
+.fade-slide-enter-to,
+.fade-slide-leave-from {
+    opacity: 1;
+    transform: translateY(0);
+}
+
 </style>

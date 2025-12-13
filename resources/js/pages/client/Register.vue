@@ -11,7 +11,7 @@ const form = ref({
     password_confirmation: ''
 })
 
-const register = async () => {
+const handleRegister = async () => {
     try {
         // 1. Lấy CSRF token
         await axios.get('/sanctum/csrf-cookie')

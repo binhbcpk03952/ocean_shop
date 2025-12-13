@@ -101,7 +101,7 @@ const formatDateTime = (dateString) => {
                                     <i class="bi bi-arrow-left me-2"></i> Tiếp tục mua sắm
                                 </router-link>
 
-                                <router-link to="/account/orders"
+                                <router-link to="/profile/orders"
                                     class="btn btn-outline w-100 py-3 rounded-3 fw-bold text-secondary">
                                     Xem chi tiết đơn hàng
                                 </router-link>

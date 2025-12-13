@@ -64,6 +64,8 @@ const routes = [
 
             { path: 'users', name: 'admin_users', component: () => import('../pages/admin/UserListAdmin.vue') },
             { path: 'orders', name: 'admin_orders', component: () => import('../pages/admin/OrderListAdmin.vue') },
+            { path: 'vouchers', name: 'admin_vouchers', component: () => import('../pages/admin/PromotionAdmin.vue') },
+
         ],
     },
 

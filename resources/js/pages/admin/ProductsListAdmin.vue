@@ -108,7 +108,7 @@ watch(() => route.query,
     <div class="">
         <div class=" mt-4">
             <h2>Quản lý sản phẩm</h2>
-            <div class="option my-4">
+            <div class="option my-4 d-flex justify-content-between">
                 <div class="search">
                     <label for="search fw-bold">Tìm kiếm sản phẩm: </label>
                     <form @submit.prevent="handleSearchProduct" class="d-flex">

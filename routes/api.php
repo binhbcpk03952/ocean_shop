@@ -16,6 +16,7 @@ use App\Http\Controllers\Api\VNPayController;
 use App\Http\Controllers\GeminiAIController;
 use App\Http\Controllers\SocialAuthController;
 use App\Http\Controllers\Api\ReviewController;
+use App\Http\Controllers\Api\PromotionController;
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -43,6 +44,7 @@ Route::post('/chat-ai', [GeminiAIController::class, 'chat']);
 // 🔹 PRODUCTS PUBLIC ROUTES
 Route::get('/products',          [ProductController::class, 'index']);
 Route::get('/products/{id}',     [ProductController::class, 'show']);
+Route::get('/products/{id}/related', [ProductController::class, 'relatedProducts']);
 
 // 🔹 BANNERS PUBLIC ROUTES
 Route::get('/banners', [BannerController::class, 'index']);
@@ -95,6 +97,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('orders', [OrderController::class, 'store']);
     // Route cho Admin cập nhật trạng thái (cần middleware check admin nếu có)
     Route::post('/update-order-status/{id}', [OrderController::class, 'updateStatus']);
+    // huy don co ly do
+    Route::post('/orders/{id}/cancel', [OrderController::class, 'cancel']);
+
 
     // Route cho User tự huỷ đơn
     Route::post('/cancel-order/{id}', [OrderController::class, 'cancelOrder']);
@@ -108,6 +113,11 @@ Route::middleware('auth:sanctum')->group(function () {
     // Danh gia san pham
     Route::post('/reviews', [ReviewController::class, 'store']);
     Route::get('/reviews/{id}', [ReviewController::class, 'index']);
+
+    // Mã giảm giá
+    Route::get('/voucher', [PromotionController::class, 'index']);
+    Route::post('/voucher', [PromotionController::class, 'store']);
+    Route::patch('/voucher/{id}', [PromotionController::class, 'update']);
 });
 
 

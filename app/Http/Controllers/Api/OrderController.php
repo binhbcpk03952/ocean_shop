@@ -10,6 +10,8 @@ use App\Models\CartItem;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\OrderSuccessMail;
+use App\Models\OrderCancellation;
+use Carbon\Carbon;
 
 
 class OrderController extends Controller
@@ -168,5 +170,73 @@ class OrderController extends Controller
             'message' => 'Đã hủy đơn hàng thành công',
             'order' => $order
         ], 200);
+    }
+
+    public function cancel(Request $request, $id)
+    {
+        $user = $request->user();
+
+        // 1️⃣ Tìm đơn hàng
+        $order = Order::where('order_id', $id)
+            ->where('user_id', $user->user_id)
+            ->first();
+
+        if (!$order) {
+            return response()->json([
+                'message' => 'Không tìm thấy đơn hàng'
+            ], 404);
+        }
+
+        // 2️⃣ Kiểm tra trạng thái có được hủy không
+        $allowCancelStatus = ['pending', 'paid'];
+
+        if (!in_array($order->status, $allowCancelStatus)) {
+            return response()->json([
+                'message' => 'Đơn hàng không thể hủy ở trạng thái hiện tại'
+            ], 400);
+        }
+
+        // 3️⃣ Validate dữ liệu
+        $request->validate([
+            'reason_code' => 'required|string|max:50',
+            'reason_text' => 'nullable|string|max:500',
+        ]);
+
+        DB::beginTransaction();
+
+        try {
+            // 4️⃣ Lưu thông tin hủy đơn
+            OrderCancellation::create([
+                'order_id'      => $order->order_id,
+                'reason_code'   => $request->reason_code,
+                'reason_text'   => $request->reason_text,
+                'canceled_by'   => 'user',
+                'refund_status' => $order->status === 'paid'
+                    ? 'pending'
+                    : 'none',
+                'refund_amount' => $order->status === 'paid'
+                    ? $order->total_amount
+                    : 0,
+                'canceled_at'   => Carbon::now(),
+            ]);
+
+            // 5️⃣ Update trạng thái đơn
+            $order->update([
+                'status' => 'cancelled'
+            ]);
+
+            DB::commit();
+
+            return response()->json([
+                'message' => 'Hủy đơn hàng thành công'
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            return response()->json([
+                'message' => 'Hủy đơn hàng thất bại',
+                'error'   => $e->getMessage()
+            ], 500);
+        }
     }
 }

@@ -3,6 +3,7 @@ import { ref, computed, onMounted } from 'vue';
 import api from '../../axios'; // Import axios config của bạn
 import { useRouter, useRoute } from 'vue-router';
 import ModalReviewProduct from '../../components/client/ModalReviewProduct.vue';
+import ModalCancelOrder from '../../components/client/ModalCancelOrder.vue';
 // ROUTER
 const router = useRouter();
 const route = useRoute()
@@ -14,6 +15,7 @@ const loading = ref(false);
 const tabs = [
     { id: 'all', label: 'Tất cả' },
     { id: 'pending', label: 'Chờ xác nhận' },
+    { id: 'paid', label: 'Thanh toán VNPay' },
     { id: 'shipping', label: 'Đang giao' },
     { id: 'completed', label: 'Hoàn thành' },
     { id: 'cancelled', label: 'Đã hủy' }
@@ -42,18 +44,45 @@ const selectTab = (tabId) => {
     // router.push giúp đổi URL mà KHÔNG load lại trang
     // dùng { ...route.query } để giữ lại các param khác nếu có (ví dụ ?page=1)
     router.push({ query: { ...route.query, type: tabId } });
+    searchKeyword.value = ""
 };
 // 1. Lọc đơn hàng theo Tab
 const filteredOrders = computed(() => {
-    if (activeTab.value === 'all') return orders.value;
+    let result = orders.value
 
-    // Logic gộp trạng thái (nếu cần)
-    if (activeTab.value === 'shipping') {
-        return orders.value.filter(o => ['shipping', 'confirmed'].includes(o.status));
+    // 1. Lọc theo tab
+    if (activeTab.value !== 'all') {
+        if (activeTab.value === 'shipping') {
+            result = result.filter(o =>
+                ['shipping', 'confirmed'].includes(o.status)
+            )
+        } else {
+            result = result.filter(o => o.status === activeTab.value)
+        }
     }
 
-    return orders.value.filter(o => o.status === activeTab.value);
-});
+    // 2. Lọc theo từ khóa tìm kiếm
+    if (searchKeyword.value.trim()) {
+        const keyword = searchKeyword.value.toLowerCase()
+
+        result = result.filter(order => {
+            // tìm theo ID đơn hàng
+            const matchOrderId =
+                String(order.order_id).includes(keyword)
+
+            // tìm theo tên sản phẩm
+            const matchProductName = order.order_item?.some(item =>
+                item.variant?.product?.name
+                    ?.toLowerCase()
+                    .includes(keyword)
+            )
+            return matchOrderId || matchProductName
+        })
+    }
+
+    return result
+})
+
 
 // 2. Format Tiền tệ
 const formatCurrency = (value) => {
@@ -71,24 +100,12 @@ const getProductImage = (item) => {
     return 'https://via.placeholder.com/150'; // Ảnh mặc định nếu lỗi
 };
 
-// 4. Xử lý Hủy đơn
-const cancelOrder = async (orderId) => {
-    if (!confirm('Bạn có chắc muốn hủy đơn hàng này?')) return;
-    try {
-        await api.post(`/cancel-order/${orderId}`);
-        // Cập nhật UI ngay lập tức
-        const order = orders.value.find(o => o.order_id === orderId);
-        if (order) order.status = 'cancelled';
-        alert('Đã hủy đơn hàng thành công');
-    } catch (error) {
-        alert('Lỗi khi hủy đơn hàng');
-    }
-};
 
 // 5. Màu sắc trạng thái
 const getStatusBadge = (status) => {
     const config = {
         pending: { text: 'CHỜ XÁC NHẬN', color: 'text-warning' },
+        paid: { text: 'ĐÃ THANH TOÁN VNPAY', color: 'text-secondary' },
         shipping: { text: 'ĐANG GIAO', color: 'text-primary' },
         completed: { text: 'HOÀN THÀNH', color: 'text-success' },
         cancelled: { text: 'ĐÃ HỦY', color: 'text-danger' },
@@ -121,38 +138,51 @@ const openReviewModal = (item) => {
     };
     showReviewModal.value = true;
 };
+
+// box huỷ đơn
+const openCancelModal = ref(false)
+const orderIdCanceled = ref(null)
+const openModalCancel = (orderId) => {
+    orderIdCanceled.value = orderId
+    openCancelModal.value = true
+}
+
+// search
+const searchKeyword = ref('')
+
 onMounted(() => {
     fetchOrders();
 });
 </script>
 
 <template>
-    <ModalReviewProduct
-            v-model="showReviewModal"
-            :product="selectedProductToReview"
-        />
+    <ModalCancelOrder :open-modal="openCancelModal" :order-id="orderIdCanceled" @close="openCancelModal = false"
+        @success="fetchOrders" />
+    <ModalReviewProduct v-model="showReviewModal" :product="selectedProductToReview" />
     <div class="order-history-page bg-light min-vh-100 pb-3">
         <div class="container">
 
             <div class="bg-white sticky-top shadow-sm mb-3 rounded-top">
                 <ul class="nav nav-tabs nav-fill flex-nowrap overflow-auto no-scrollbar">
                     <li class="nav-item" v-for="tab in tabs" :key="tab.id">
-                        <a
-                            class="nav-link py-3 fw-medium text-nowrap cursor-pointer"
-                            :class="{ 'active-tab': activeTab === tab.id }"
-                            @click="selectTab(tab.id)"
-                        >
+                        <a class="nav-link py-3 fw-medium text-nowrap cursor-pointer"
+                            :class="{ 'active-tab': activeTab === tab.id }" @click="selectTab(tab.id)">
                             {{ tab.label }}
-                            </a>
+                        </a>
                     </li>
                 </ul>
             </div>
 
             <div class="bg-white p-3 mb-3 rounded shadow-sm">
                 <div class="input-group bg-light rounded border-0">
-                    <span class="input-group-text bg-transparent border-0"><i class="bi bi-search text-muted"></i></span>
-                    <input type="text" class="form-control bg-transparent border-0 shadow-none" placeholder="Tìm kiếm theo ID đơn hàng hoặc Tên sản phẩm" @change="">
+                    <span class="input-group-text bg-transparent border-0"><i
+                            class="bi bi-search text-muted"></i></span>
+                    <input type="text" class="form-control bg-transparent border-0 shadow-none"
+                        placeholder="Tìm kiếm theo ID đơn hàng hoặc Tên sản phẩm" v-model="searchKeyword">
                 </div>
+            </div>
+            <div v-if="searchKeyword" class="text-muted small mb-2">
+                Kết quả tìm kiếm cho: <strong>"{{ searchKeyword }}"</strong>
             </div>
 
             <div v-if="loading" class="text-center py-5">
@@ -160,21 +190,20 @@ onMounted(() => {
             </div>
 
             <div v-else-if="filteredOrders.length === 0" class="text-center py-5 bg-white rounded shadow-sm">
-                <img src="https://deo.shopeemobile.com/shopee/shopee-pcmall-live-sg/5fafbb923393b712b96488590b8f781f.png" width="100" alt="Empty">
+                <img src="https://deo.shopeemobile.com/shopee/shopee-pcmall-live-sg/5fafbb923393b712b96488590b8f781f.png"
+                    width="100" alt="Empty">
                 <p class="mt-3 text-muted">Chưa có đơn hàng nào</p>
-                <button class="btn btn-brand text-white mt-2">Mua sắm ngay</button>
+                <router-link to="/products" class="btn btn-brand text-white mt-2">Mua sắm ngay</router-link>
             </div>
 
             <div v-else class="d-flex flex-column gap-3">
-                <div
-                    v-for="order in filteredOrders"
-                    :key="order.order_id"
-                    class="card border-0 shadow-sm rounded-3"
-                >
-                    <div class="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center">
+                <div v-for="order in filteredOrders" :key="order.order_id" class="card border-0 shadow-sm rounded-3">
+                    <div
+                        class="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center">
                         <div class="d-flex align-items-center gap-2">
                             <span class="fw-bold brand-text">Ocean Shop</span>
-                            <span class="text-muted small border-start ps-2">ID: {{ order.order_id }}</span>
+                            <span class="text-muted small border-start ps-2">ID: <span class="fw-bold">#OCEAN-{{
+                                order.order_id }}</span></span>
                         </div>
                         <span class="fw-bold small text-uppercase" :class="getStatusBadge(order.status).color">
                             {{ getStatusBadge(order.status).text }}
@@ -182,17 +211,12 @@ onMounted(() => {
                     </div>
 
                     <div class="card-body p-0">
-                        <div
-                            v-for="item in order.order_item"
-                            :key="item.order_item_id"
-                            class="p-3 border-bottom d-flex gap-3 item-row"
-                        >
-                            <div class="flex-shrink-0 border rounded overflow-hidden" style="width: 80px; height: auto;">
-                                <img
-                                    :src="'../../../../storage/' + getProductImage(item)"
-                                    class="w-100 h-100 object-fit-cover"
-                                    alt="Product Image"
-                                >
+                        <div v-for="item in order.order_item" :key="item.order_item_id"
+                            class="p-3 border-bottom d-flex gap-3 item-row">
+                            <div class="flex-shrink-0 border rounded overflow-hidden"
+                                style="width: 80px; height: auto;">
+                                <img :src="'../../../../storage/' + getProductImage(item)"
+                                    class="w-100 h-100 object-fit-cover" alt="Product Image">
                             </div>
 
                             <div class="flex-grow-1">
@@ -200,7 +224,9 @@ onMounted(() => {
                                     {{ item.variant?.product?.name || 'Sản phẩm không xác định' }}
                                 </h6>
                                 <div class="text-muted small mb-1">
-                                    Phân loại: <span class="color-swatch" :style="{ backgroundColor: getFormattedColor(item.variant.color)}"></span>, {{ item.variant?.size }}
+                                    Phân loại: <span class="color-swatch"
+                                        :style="{ backgroundColor: getFormattedColor(item.variant.color) }"></span>, {{
+                                            item.variant?.size }}
                                 </div>
                                 <div class="d-flex justify-content-between align-items-center mt-2">
                                     <span class="small">x{{ item.quantity }}</span>
@@ -212,9 +238,9 @@ onMounted(() => {
                                     </span>
                                 </div>
                             </div>
-                            <template v-if="['completed', 'cancelled'].includes(order.status)">
-                                <button v-if="order.status === 'completed'" @click="openReviewModal(item)" class="btn btn-outline-brand px-4 min-w-btn">Đánh giá</button>
-                                <button class="btn btn-brand text-white px-4 min-w-btn">Mua lại</button>
+                            <template v-if="['completed'].includes(order.status)">
+                                <button v-if="order.status === 'completed'" @click="openReviewModal(item)"
+                                    class="btn btn-outline-brand px-4 min-w-btn ">Đánh giá</button>
                             </template>
                         </div>
                     </div>
@@ -226,12 +252,12 @@ onMounted(() => {
                         </div>
 
                         <div class="d-flex justify-content-end gap-2">
-                            <button
-                                v-if="order.status === 'pending'"
-                                @click="cancelOrder(order.order_id)"
-                                class="btn btn-secondary px-4 min-w-btn"
-                            >
-                                Hủy đơn
+                            <template v-if="['completed', 'cancelled'].includes(order.status)">
+                                <button class="btn btn-brand text-white px-4 min-w-btn">Mua lại</button>
+                            </template>
+                            <button v-if="['pending', 'paid'].includes(order.status)" class="btn btn-outline-danger"
+                                @click="openModalCancel(order.order_id)">
+                                Hủy đơn hàng
                             </button>
 
                             <button v-if="order.status === 'shipping'" class="btn btn-brand text-white px-4 min-w-btn">
@@ -252,29 +278,44 @@ onMounted(() => {
 :root {
     --brand-color: #3497e0;
 }
-.brand-text { color: #3497e0 !important; }
-.bg-brand { background-color: #3497e0 !important; }
+
+.brand-text {
+    color: #3497e0 !important;
+}
+
+.bg-brand {
+    background-color: #3497e0 !important;
+}
 
 /* --- Button Styles --- */
 .btn-brand {
     background-color: #3497e0;
     border-color: #3497e0;
 }
+
 .btn-brand:hover {
     background-color: #287dbd;
     border-color: #287dbd;
 }
+
 .btn-outline-brand {
     color: #3497e0;
     border-color: #3497e0;
 }
+
 .btn-outline-brand:hover {
     background-color: rgba(52, 151, 224, 0.05);
 }
-.min-w-btn { min-width: 120px; }
+
+.min-w-btn {
+    min-width: 120px;
+}
 
 /* --- Tab Styles (Shopee Like) --- */
-.nav-tabs { border-bottom: 1px solid #f1f1f1; }
+.nav-tabs {
+    border-bottom: 1px solid #f1f1f1;
+}
+
 .nav-link {
     color: #555;
     border: none;
@@ -282,17 +323,33 @@ onMounted(() => {
     transition: all 0.2s;
     font-size: 0.95rem;
 }
-.nav-link:hover { color: #3497e0; }
+
+.nav-link:hover {
+    color: #3497e0;
+}
+
 .active-tab {
     color: #3497e0 !important;
     border-bottom: 2px solid #3497e0 !important;
 }
 
 /* --- Utilities --- */
-.cursor-pointer { cursor: pointer; }
-.object-fit-cover { object-fit: cover; }
-.no-scrollbar::-webkit-scrollbar { display: none; }
-.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+.cursor-pointer {
+    cursor: pointer;
+}
+
+.object-fit-cover {
+    object-fit: cover;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+    display: none;
+}
+
+.no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
 
 .text-truncate-2 {
     display: -webkit-box;
@@ -300,8 +357,12 @@ onMounted(() => {
     -webkit-box-orient: vertical;
     overflow: hidden;
 }
+
 /* Hiệu ứng hover sản phẩm */
-.item-row:hover { background-color: #fafafa; }
+.item-row:hover {
+    background-color: #fafafa;
+}
+
 .color-swatch {
     width: 15px;
     height: 15px;

@@ -5,6 +5,7 @@ import { useRoute, useRouter } from 'vue-router';
 import CreateAddress from './CreateAddress.vue';
 import ModalChangePaymentMethod from '../../components/client/ModalChangePaymentMethod.vue';
 import ModalChangeAddress from '../../components/client/ModalChangeAddress.vue';
+import ModalChangeVoucher from '../../components/client/ModalChangeVoucher.vue';
 
 // route
 const route = useRoute()
@@ -61,6 +62,37 @@ const saveModalMethod = (method) => {
     console.log(paymentMe.id);
 
 }
+
+// chon ma giam gia
+const vouchers = ref([]) // danh sach ma giam gia
+const openModalVoucher = ref(false)
+const voucherId = ref(null)
+
+const fetchVoucher = async () => {
+    try {
+        const res = await api.get('/voucher')
+        if (res.status === 200) {
+            vouchers.value = res.data
+        }
+    } catch (err) {
+        console.log('Loi khi goi APi: ', err)
+    }
+}
+const closeModalVoucher = () => {
+    openModalVoucher.value = false
+}
+const saveModalVoucher = (id) => {
+    voucherId.value = id
+    closeModalVoucher()
+    console.log(voucherId.value);
+}
+
+const voucherActive = computed(() => {
+    if (!voucherId.value) return null
+
+    return vouchers.value.find(voucher => voucher.promotion_id === voucherId.value)
+})
+
 // 1. Dữ liệu Form
 const address = ref([]);
 const productsInCart = ref([]);
@@ -155,6 +187,43 @@ const subtotal = computed(() => {
         return sum + price * item.quantity;
     }, 0);
 });
+const discountAmount = computed(() => {
+    if (!voucherActive.value) return 0;
+
+    const voucher = voucherActive.value;
+
+    // Không đủ điều kiện đơn tối thiểu
+    if (
+        voucher.min_order_amount &&
+        subtotal.value < voucher.min_order_amount
+    ) {
+        return 0;
+    }
+
+    let discount = 0;
+
+    // Giảm theo %
+    if (voucher.discount_type === 'percentage') {
+        discount = (subtotal.value * voucher.discount_value) / 100;
+    }
+
+    // Giảm số tiền cố định
+    if (voucher.discount_type === 'fixed') {
+        discount = voucher.discount_value;
+    }
+
+    // Giới hạn giảm tối đa
+    if (
+        voucher.max_discount_amount &&
+        discount > voucher.max_discount_amount
+    ) {
+        discount = voucher.max_discount_amount;
+    }
+
+    // Không cho giảm quá tiền hàng
+    return Math.min(discount, subtotal.value);
+});
+
 
 
 const shippingFee = computed(() => {
@@ -162,7 +231,8 @@ const shippingFee = computed(() => {
 });
 
 const total = computed(() => {
-    return subtotal.value + shippingFee.value;
+    let finalTotal = subtotal.value + shippingFee.value - discountAmount.value;
+    return finalTotal > 0 ? finalTotal : 0; // Không để tổng tiền âm
 });
 
 // 4. Hàm tiện ích & Xử lý
@@ -177,8 +247,8 @@ const handleOrder = async () => {
         total_amount: subtotal.value,
         shipping_fee: shippingFee.value,
         payment_method: paymentMe.id,
-        promotion_id: null,
-        discount_amount: 0,
+        promotion_id: voucherId.value,
+        discount_amount: discountAmount.value,
 
         products: productsSelected.value.map(item => ({
             cart_item_id: item.cart_item_id,
@@ -213,6 +283,7 @@ const handleOrder = async () => {
 onMounted(() => {
     handleFetchAddress();
     handleFetchProductsInCart();
+    fetchVoucher();
 })
 </script>
 <template>
@@ -221,6 +292,9 @@ onMounted(() => {
     <CreateAddress :open-modal="openModalAddAddress" :mode="mode" @close="handleCloseModal" @save="handleSaveModal" />
     <ModalChangePaymentMethod :open-modal="openModalChangePaymentMethod" :method-id="paymentMe.id"
         @close="closeModalPaymentMethod" @save="saveModalMethod" />
+
+    <ModalChangeVoucher :open-modal="openModalVoucher" :voucher-id="voucherId" :vouchers="vouchers"
+        @close="closeModalVoucher" @save="saveModalVoucher" />
     <div class="checkout-page py-5 bg-light min-vh-100">
         <div class="container">
             <form @submit.prevent="handleOrder">
@@ -315,12 +389,19 @@ onMounted(() => {
 
                                     <div class="input-group mb-4">
                                         <button type="button"
-                                            class="btn color-main border rounded-3 w-100 py-2 d-flex justify-content-between px-4">
-                                            <span>
-                                                <i class="bi bi-tags fs-5"></i>
-                                                Chọn khuyến mại
+                                            class="btn color-main border rounded-3 w-100 py-2 d-flex justify-content-between px-4 align-items-center"
+                                            @click="openModalVoucher = true">
+                                            <span class="d-flex align-items-center">
+                                                <i class="bi bi-tags fs-5 me-2"></i>
+                                                <span v-if="voucherActive" class="fw-bold text-success">
+                                                    Đã chọn: {{ voucherActive.code }}
+                                                </span>
+                                                <span v-else>Chọn khuyến mại</span>
                                             </span>
-                                            <i class="bi bi-chevron-compact-right fs-5 text-black"></i>
+
+                                            <i v-if="voucherActive" @click.stop="voucherId = null"
+                                                class="bi bi-x-circle fs-5 text-danger z-2" title="Bỏ chọn"></i>
+                                            <i v-else class="bi bi-chevron-compact-right fs-5 text-black"></i>
                                         </button>
                                     </div>
                                     <div class="payment-methods">
@@ -332,18 +413,6 @@ onMounted(() => {
                                             </div>
                                             <i class="bi bi-chevron-compact-right fs-5 text-black"></i>
                                         </div>
-
-                                        <!-- <div class="payment-item border rounded-3 p-3 d-flex align-items-center cursor-pointer"
-                                            :class="{ 'active-method': form.paymentMethod === 'banking' }"
-                                            @click="form.paymentMethod = 'banking'">
-                                            <input class="form-check-input me-3" type="radio" value="banking"
-                                                v-model="form.paymentMethod">
-                                            <div class="d-flex flex-column">
-                                                <span class="fw-bold">Chuyển khoản ngân hàng / VNPAY</span>
-                                                <small class="text-muted">Giảm ngay 5% tối đa 100k.</small>
-                                            </div>
-                                            <i class="bi bi-qr-code-scan ms-auto fs-4 text-secondary"></i>
-                                        </div> -->
 
                                     </div>
                                 </div>
@@ -358,8 +427,10 @@ onMounted(() => {
                                     <span class="fw-bold">{{ formatCurrency(subtotal) }}</span>
                                 </div>
                                 <div class="d-flex justify-content-between mb-2">
-                                    <span class="text-muted ">Giảm giá</span>
-                                    <span class="fw-bold">{{ formatCurrency(0) }}</span>
+                                    <span class="text-muted">
+                                        Giảm giá <span v-if="voucherActive" class="fw-bold">({{ voucherActive.code }})</span>
+                                    </span>
+                                    <span class="fw-bold">- {{ formatCurrency(discountAmount || 0) }}</span>
                                 </div>
                                 <div class="d-flex justify-content-between mb-3">
                                     <span class="text-muted">Phí vận chuyển</span>

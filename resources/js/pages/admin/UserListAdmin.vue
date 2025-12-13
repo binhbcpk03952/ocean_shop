@@ -3,6 +3,7 @@ import { ref, onMounted } from 'vue';
 import api from '../../axios';
 import ModalFormUser from '../../components/admin/ModalFormUser.vue';
 const users = ref([])
+const filter = ref(null)
 const showModal = ref(false);
 const modalMode = ref('create'); // 'create' hoặc 'edit'
 const userData = ref({});
@@ -47,7 +48,12 @@ const handleDeleteUser = async (id) => {
         }
     }
 }
-
+const handleFilterPeople = (role) => {
+    if (role === 'all') {
+        users.value
+    }
+    users.value = users.value.filter(user => user.role === role)
+}
 
 
 
@@ -61,15 +67,16 @@ onMounted(() => {
         @save="handleFetchUsers" />
 
     <h1 class="fs-2 mt-3">Quản lí người dùng</h1>
-
-    <div class="fillter col-lg-3">
-        <select class="form-select" width="200px">
-            <option value="all">Mặc định</option>
-            <option value="admin">Quản trị</option>
-            <option value="user">Người dùng</option>
-        </select>
+    <div class="d-flex justify-content-between px-3">
+        <div class="fillter col-lg-3">
+            <select class="form-select" width="200px" v-model="filter" @change="handleFilterPeople(filter)">
+                <option value="all">Tất cả</option>
+                <option value="admin">Quản trị</option>
+                <option value="user">Người dùng</option>
+            </select>
+        </div>
+        <button class="btn btn-primary" @click="handleAddUser">Thêm người dùng</button>
     </div>
-    <button class="btn btn-primary" @click="handleAddUser">Thêm người dùng</button>
     <table class="table table-striper table hover">
         <thead>
             <tr>
