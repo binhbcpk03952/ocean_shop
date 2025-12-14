@@ -49,6 +49,8 @@ Route::get('/products/{id}/related', [ProductController::class, 'relatedProducts
 // 🔹 BANNERS PUBLIC ROUTES
 Route::get('/banners', [BannerController::class, 'index']);
 
+Route::get('posts', [PostController::class, 'index']);
+Route::get('posts/{slug}', [PostController::class, 'show']);
 
 // 🔒 PROTECTED ROUTES (LOGIN REQUIRED)
 Route::middleware('auth:sanctum')->group(function () {
@@ -80,8 +82,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('/carts/{id}', [CartController::class, 'destroy']);
 
     Route::post('posts', [PostController::class, 'store']);
-    Route::get('posts', [PostController::class, 'index']);
-    Route::get('posts/{id}', [PostController::class, 'show']);
     Route::delete('posts/{id}', [PostController::class, 'destroy']);
 
     Route::post('banners', [BannerController::class, 'store']);

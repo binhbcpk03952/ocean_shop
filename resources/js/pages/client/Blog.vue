@@ -8,7 +8,16 @@ onMounted(async () => {
     try {
         const response = await api.get('/posts')
         if (response.status === 200) {
-            posts.value = response.data
+            // posts.value = response.data
+
+            const rawData = response.data
+            posts.value = rawData.map(post => {
+                return {
+                    ...post,
+                    slug: post.slug || post.post_id
+
+                }
+            })
         } else {
             console.log('Có lỗi xảy ra, vui lòng thử lại.')
         }
@@ -53,7 +62,7 @@ onMounted(async () => {
         </div>
         <div class="row">
             <div class="col-md-4" v-if="posts" v-for="post in posts" :key="post.post_id">
-                <router-link class="post-item text-decoration-none text-dark" :to="'/blog/' + post.post_id">
+                <router-link class="post-item text-decoration-none text-dark" :to="'/blog/' + post.slug">
                     <div class="post-img">
                         <img :src="'../../../../storage/' + post.thumbnail_path" alt="images" class="w-100">
                     </div>

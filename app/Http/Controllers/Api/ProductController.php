@@ -17,54 +17,59 @@ class ProductController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Product::with(['variant', 'image', 'categories']);
+        $query = Product::query()
+            ->with([
+                'variant',
+                'image',
+                'categories'
+            ]);
 
-        // // --- FILTER THEO GIÁ ---
-        // if ($request->price_range) {
-        //     switch ($request->price_range) {
-        //         case 'under_100':
-        //             $query->where('price', '<', 100000);
-        //             break;
-        //         case '100_1m':
-        //             $query->whereBetween('price', [100000, 1000000]);
-        //             break;
-        //         case '1m_5m':
-        //             $query->whereBetween('price', [1000000, 5000000]);
-        //             break;
-        //         case 'over_5m':
-        //             $query->where('price', '>', 5000000);
-        //             break;
-        //     }
-        // }
+        /* =========================
+     * 1️⃣ LỌC THEO DANH MỤC (CHA → CON)
+     * ========================= */
+        if ($request->filled('category_id')) {
+            $categoryId = (int) $request->category_id;
+            $childIds = Categories::getAllChildIds($categoryId);
 
-        // // --- FILTER THEO DANH MỤC ---
-        // if ($request->category_id) {
-        //     $query->where('category_id', $request->category_id);
-        // }
+            $allCategoryIds = array_merge([$categoryId], $childIds);
+            $query->whereHas('categories', function ($q) use ($allCategoryIds) {
+                $q->whereIn('categories.category_id', $allCategoryIds);
+            });
+        }
+        if ($request->filled('keyword')) {
+            $keyword = trim($request->keyword);
 
-        // // --- FILTER THEO SIZE ---
-        // if ($request->size) {
-        //     $query->whereHas('variant', function ($q) use ($request) {
-        //         $q->where('size', $request->size);
-        //     });
-        // }
+            $query->where('name', 'LIKE', "%{$keyword}%");
+        }
+        switch ($request->get('sort')) {
+            case 'price_asc':
+                $query->orderBy('price', 'asc');
+                break;
 
-        // // --- FILTER ƯU ĐÃI ---
-        // if ($request->filter === 'sale') {
-        //     $query->whereNotNull('sale_price')
-        //         ->whereColumn('sale_price', '<', 'price');
-        // }
+            case 'price_desc':
+                $query->orderBy('price', 'desc');
+                break;
 
-        // // --- FILTER MỚI NHẤT ---
-        // if ($request->filter === 'latest') {
-        //     $query->orderBy('created_at', 'desc');
-        // }
+            case 'oldest':
+                $query->orderBy('created_at', 'asc');
+                break;
 
-        return response()->json($query->get());
+            default: // newest
+                $query->orderBy('created_at', 'desc');
+                break;
+        }
+        $products = $query->paginate(12)->withQueryString();
+
+        return response()->json([
+            'status'  => true,
+            'message' => 'Lấy danh sách sản phẩm thành công',
+            'data'    => $products
+        ]);
     }
 
     public function show($id)
     {
+        
         return Product::with(['variant', 'image', 'categories'])->findOrFail($id);
     }
 
@@ -166,24 +171,22 @@ class ProductController extends Controller
     }
 
     public function relatedProducts($id)
-{
-    // Lấy sản phẩm gốc
-    $product = Product::findOrFail($id);
+    {
+        // Lấy sản phẩm gốc
+        $product = Product::findOrFail($id);
 
-    // Lấy sản phẩm liên quan cùng danh mục
-    $related = Product::whereHas('categories', function($query) use ($product) {
-        $query->whereIn('category_id', $product->categories->pluck('category_id'));
-    })
-    ->where('product_id', '!=', $product->product_id)
-    ->with(['variant', 'image', 'categories'])
-    ->limit(4)
-    ->get();
+        // Lấy sản phẩm liên quan cùng danh mục
+        $related = Product::whereHas('categories', function ($query) use ($product) {
+            $query->whereIn('category_id', $product->categories->pluck('category_id'));
+        })
+            ->where('product_id', '!=', $product->product_id)
+            ->with(['variant', 'image', 'categories'])
+            ->limit(4)
+            ->get();
 
-    return response()->json([
-        'success' => true,
-        'data' => $related
-    ]);
-}
-
-
+        return response()->json([
+            'success' => true,
+            'data' => $related
+        ]);
+    }
 }

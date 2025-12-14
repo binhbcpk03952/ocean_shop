@@ -1,17 +1,18 @@
 <script setup>
 import { useRoute } from 'vue-router';
 import api from '../../axios';
-import { ref, onMounted, watch } from 'vue';
+import { ref, onMounted, watch, computed } from 'vue';
+import { useHead } from '@vueuse/head'
 
 const route = useRoute()
 const post = ref(null)
 
-const handleFetchPost = async (postId) => {
+const handleFetchPost = async (slug) => {
     try {
-        const response = await api.get(`/posts/${postId}`)
+        const response = await api.get(`/posts/${slug}`)
         if (response.status === 200) {
             post.value = response.data
-            console.log(post.value);
+            // console.log(post.value);
         } else {
             console.log('Có lỗi xảy ra, vui lòng thử lại.')
         }
@@ -22,6 +23,15 @@ const handleFetchPost = async (postId) => {
 
 watch(() => route.params.id, (newPost) => {
     handleFetchPost(newPost)
+})
+useHead({
+    title: computed(() => post.value?.title || 'Ocean Shop'),
+    meta: [
+        {
+            name: 'description',
+            content: computed(() => post.value?.meta_description || 'Mô tả mặc định')
+        }
+    ]
 })
 
 onMounted(() => {

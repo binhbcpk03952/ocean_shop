@@ -63,7 +63,7 @@ const handleChangeColor = (color) => {
 <template>
     <router-link :class="`col-md-${props.column} my-2 nav-link p-2`" :to="`/products/` +  props.product.product_id"
        >
-        <div class="box_product card p-3">
+        <div class="box_product">
             <!-- <button type="button" class="btn btn-favorite position-absolute top-0 end-0 m-2"
                 :class="props.isFavorite ? 'btn-danger' : 'btn-ouline-danger'"
                 @click.stop.prevent="handleToggleFavorite">
@@ -73,14 +73,14 @@ const handleChangeColor = (color) => {
                 <img v-if="imageWithVariant" :src="'../../../../storage/' + imageWithVariant" alt="name-product"
                     class="img-product w-100">
             </div>
-            <div class="price-product fw-medium text-black fs-4 fw-medium">
+            <div class="price-product fw-medium text-black fs-4 fw-medium px-2">
                 {{ Number(props.product.price).toLocaleString('vi-VN') }}đ
             </div>
 
-            <div class="name-product fw-light text-ellipsis mb-2" style="z-index: 10;">
+            <div class="name-product fw-light text-ellipsis mb-2 px-2" style="z-index: 10;">
                 {{ props.product.name }}
             </div>
-            <div class="variant-colors d-flex  align-items-center">
+            <div class="variant-colors d-flex  align-items-center px-2">
                 <template v-for="variant in uniqueVariants" :key="variant.variant_id">
                     <button class="btn-color" :class="{ 'color_active': selectedColor === variant.color }"
                         :style="{ backgroundColor: variant.color, }" @click.stop.prevent="handleChangeColor(variant.color)"></button>
@@ -103,8 +103,8 @@ const handleChangeColor = (color) => {
     /* border: 1px solid #ccc; */
     color: #dc3545;
     transition: 0.3s;
-    width: 35px;
-    height: 35px;
+    width: 40px;
+    height: 40px;
     display: flex;
     justify-content: center;
     align-items: center;

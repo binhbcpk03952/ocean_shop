@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, ref } from 'vue'
+import { onMounted, ref, watch } from 'vue'
 import Quill from 'quill'
 import 'quill/dist/quill.snow.css'
 import api from '../../axios'
@@ -7,14 +7,28 @@ import api from '../../axios'
 const form = ref({
     title: '',
     slug: '',
+    metaDescription: '',
     content: '',
     thumbnail: null,
     // Thêm trường preview
     thumbnailPreview: null
 })
 
+
 const editor = ref(null)
 let quill = null
+
+const generateSlug = (text) => {
+    return text
+        .toLowerCase()
+        .normalize('NFD')                 // tách dấu
+        .replace(/[\u0300-\u036f]/g, '')  // xoá dấu
+        .replace(/đ/g, 'd')
+        .replace(/[^a-z0-9\s-]/g, '')     // xoá ký tự đặc biệt
+        .trim()
+        .replace(/\s+/g, '-')
+}
+
 
 onMounted(() => {
     quill = new Quill(editor.value, {
@@ -43,12 +57,67 @@ const onThumbnailChange = (e) => {
     }
 }
 
+const checkSlugUnique = async (baseSlug) => {
+    try {
+        const res = await api.get('/posts')
+        const slugs = res.data.map(post => post.slug)
+
+        if (!slugs.includes(baseSlug)) {
+            return baseSlug
+        }
+
+        let count = 1
+        let newSlug = `${baseSlug}-${count}`
+
+        while (slugs.includes(newSlug)) {
+            count++
+            newSlug = `${baseSlug}-${count}`
+        }
+
+        return newSlug
+    } catch (error) {
+        console.error('Lỗi kiểm tra slug:', error)
+        return baseSlug
+    }
+}
+let slugTimeout = null
+
+watch(() => form.value.title, (newTitle) => {
+    if (!newTitle) {
+        form.value.slug = ''
+        return
+    }
+    const baseSlug = generateSlug(newTitle)
+
+    clearTimeout(slugTimeout)
+    slugTimeout = setTimeout(async () => {
+        form.value.slug = await checkSlugUnique(baseSlug)
+    }, 500)
+})
+const generateMetaDescription = (html) => {
+    const div = document.createElement('div')
+    div.innerHTML = html
+    const text = div.textContent || div.innerText || ''
+    return text.trim().substring(0, 150)
+}
+const isMetaEdited = ref(false)
+
+
 const submitPost = async () => {
     form.value.content = quill.root.innerHTML
+    if (!isMetaEdited.value || !form.value.metaDescription) {
+        form.value.metaDescription = generateMetaDescription(form.value.content)
+    }
+
+    if (form.value.metaDescription.length > 160) {
+        alert('Meta description không được vượt quá 160 ký tự')
+        return
+    }
 
     const data = new FormData()
     data.append('title', form.value.title)
     data.append('slug', form.value.slug)
+    data.append('meta_description', form.value.metaDescription)
     data.append('content', form.value.content)
 
     if (form.value.thumbnail) {
@@ -89,7 +158,19 @@ const submitPost = async () => {
 
                     <div>
                         <label class="form-label fw-bold">Slug</label>
-                        <input v-model="form.slug" type="text" class="form-control" placeholder="slug-bai-viet" />
+                        <input v-model="form.slug" type="text" class="form-control" placeholder="slug-bai-viet"
+                            readonly />
+                    </div>
+                    <div>
+                        <label class="form-label fw-bold">Meta description (SEO) </label>
+                        <textarea v-model="form.metaDescription" class="form-control" rows="3"
+                            @input="isMetaEdited = true" maxlength="160"
+                            placeholder="Tối ưu SEO, 140-160 ký tự"></textarea>
+                        <div style="font-size: 12px">
+                            <span :style="{ color: form.metaDescription.length > 160 ? 'red' : '#666' }">
+                                {{ form.metaDescription.length }}/160 ký tự
+                            </span>
+                        </div>
                     </div>
 
                     <div>

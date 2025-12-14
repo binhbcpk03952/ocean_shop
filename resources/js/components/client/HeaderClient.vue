@@ -68,7 +68,7 @@ const fetchProducts = async () => {
             params: { limit: 100 }
         });
 
-        const rawData = res.data.data || res.data || []; // Tùy cấu trúc trả về thực tế
+        const rawData = res.data.data.data || res.data || []; // Tùy cấu trúc trả về thực tế
 
         // MAP DỮ LIỆU: Biến đổi JSON server thành format Client cần
         products.value = rawData.map(product => {
@@ -185,7 +185,7 @@ onBeforeUnmount(() => {
                             <span class="text-secondary user-select-none">Tìm kiếm...</span>
                         </div>
 
-                        <div class="user-actions d-flex align-items-center gap-3">
+                       <div class="user-actions d-flex align-items-center gap-3">
                             <div v-if="auth.loggedIn" class="d-flex align-items-center gap-3">
                                 <router-link to="/carts" class="position-relative text-dark">
                                     <i class="bi bi-bag fs-4"></i>
@@ -196,7 +196,7 @@ onBeforeUnmount(() => {
 
                                 <div class="user-dropdown-container" ref="dropdownRef">
                                     <span class="logged-in-icon" @click="handleDropdown">
-                                        <i class="bi bi-person-circle fs-3 text-primary"></i>
+                                        <i class="bi bi-person-circle fs-4 text-a"></i>
                                     </span>
 
                                     <transition name="fade">
@@ -220,6 +220,7 @@ onBeforeUnmount(() => {
                                 <i class="bi bi-person fs-5"></i> Đăng nhập
                             </router-link>
                         </div>
+
                     </div>
                 </div>
             </div>
@@ -286,11 +287,11 @@ onBeforeUnmount(() => {
 
                     </div>
 
-                    <div class="bg-light py-2 text-center border-top">
-                        <span @click="closeBox" class="btn btn-sm btn-outline-secondary rounded-pill px-4">
-                            Đóng <i class="bi bi-x-lg ms-1"></i>
-                        </span>
-                    </div>
+                </div>
+                <div class=" py-2 text-center">
+                    <span @click="closeBox" class="btn btn-sm bg-white rounded-pill px-4">
+                        Đóng <i class="bi bi-x-lg ms-1"></i>
+                    </span>
                 </div>
                 <div class="overlay-backdrop" @click="closeBox"></div>
             </div>
@@ -393,7 +394,7 @@ onBeforeUnmount(() => {
     display: block;
     color: #333;
     text-decoration: none;
-    font-size: 14px;
+    /* font-size: px; */
     cursor: pointer;
     transition: background 0.2s;
 }

@@ -16,6 +16,7 @@ class PostController extends Controller
         $request->validate([
             'title' => 'required|string|max:255',
             'slug' => 'required|string|unique:posts,slug|max:255',
+            'meta_description' => 'nullable|string|max:160',
             'content' => 'required',
             'thumbnail' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg,webp|max:2048', // Ảnh max 2MB
         ]);
@@ -36,6 +37,7 @@ class PostController extends Controller
             'user_id' => $user_id,
             'title' => $request->title,
             'slug' => $request->slug,
+            'meta_description' => $request->meta_description,
             'content' => $request->content,
             'thumbnail_path' => $thumbnailPath,
         ]);
@@ -46,14 +48,55 @@ class PostController extends Controller
             'post' => $post,
         ], 201); // 201 Created
     }
-    public function index(Request $request)
+
+    public function update(Request $request, $id)
+    {
+        $post = Post::findOrFail($id);
+        $request->validate([
+            'title' => 'required|string|max:255',
+            'slug' => 'required|string|unique:posts,slug|max:255',
+            'meta_description' => 'nullable|string|max:160',
+            'content' => 'required',
+            'thumnail' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg,webp|max:2048', // Ảnh max 2MB
+        ]);
+        $user_id = $request->user()->user_id;
+
+        $thumbnailPath = null;
+
+        // 2. Xử lý Upload Thumbnail
+        if ($request->hasFile('thumbnail')) {
+            Storage::disk('public')->delete($post->thumbnail_path);
+            $file = $request->file('thumbnail');
+            // Tạo tên file duy nhất
+            $imageName = time() . '_' . Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME)) . '.' . $file->getClientOriginalExtension();
+            $thumbnailPath = $file->storeAs('images/posts', $imageName, 'public');
+        }
+
+        // 3. Lưu dữ liệu vào Database
+        $post->update([
+            'user_id' => $user_id,
+            'title' => $request->title,
+            'slug' => $request->slug,
+            'meta_description' => $request->meta_description,
+            'content' => $request->content,
+            'thumbnail_path' => $thumbnailPath,
+        ]);
+        return response()->json([
+            'message' => 'Cập nhật bài viết thành công!',
+            'post' => $post,
+            'status' => true,
+        ], 200);
+    }
+
+    public function index()
     {
         $posts = Post::all();
         return response()->json($posts);
     }
-    public function show($id)
+    public function show($slug)
     {
-        return Post::findOrFail($id);
+        $postDetail =  Post::where('slug', $slug)->firstOrFail();
+        return response()->json($postDetail);
     }
     public function destroy($id)
     {

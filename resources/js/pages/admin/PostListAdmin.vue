@@ -40,8 +40,12 @@ onMounted(() => {
 })
 </script>
 <template>
-    <h1>Trang quản lí bài viết</h1>
-    <RouterLink to="add_post">Thêm bài viết</RouterLink>
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Trang quản lí bài viết</h1>
+        <div class="add_post">
+            <RouterLink to="add_post" class="btn btn-primary">Thêm bài viết</RouterLink>
+        </div>
+    </div>
 
     <table class="table table-striped table-hover mt-4 ms-4">
         <thead>

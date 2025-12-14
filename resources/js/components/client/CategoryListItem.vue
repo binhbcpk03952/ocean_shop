@@ -20,10 +20,10 @@ const toggleExpand = (id) => {
 <template>
     <ul class="list-category p-0 m-0 list-unstyled">
         <li class="d-flex justify-content-between align-items-center category-item">
-            <span class="category-name" :class="{ 'fw-600': level === 0, 'text-small': level > 0 }"
+            <router-link :to="'/products?category_id=' + props.categories.category_id" class="category-name" :class="{ 'fw-600': level === 0, 'text-small': level > 0 }"
                 @click="toggleExpand(props.categories.category_id)">
                 {{ props.categories.name }}
-            </span>
+            </router-link>
 
             <i v-if="props.categories.children && props.categories.children.length > 0"
                 class="bi bi-chevron-right toggle-icon" :class="{ rotate: expandedId === props.categories.category_id }"
@@ -63,6 +63,7 @@ const toggleExpand = (id) => {
     padding: 0.5rem;
     border-radius: 4px;
     transition: color 0.2s ease, background-color 0.2s ease;
+    text-decoration: none;
 }
 
 .category-name:hover {
