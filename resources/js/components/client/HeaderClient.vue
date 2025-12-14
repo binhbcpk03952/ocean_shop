@@ -49,7 +49,7 @@ const handleLogout = async () => {
         auth.role = '';
         auth.token = '';
         await checkLogin();
-        router.push('/login');
+        router.push('/');
     } catch (error) {
         console.error("Lỗi đăng xuất:", error);
     }
@@ -216,7 +216,7 @@ onBeforeUnmount(() => {
                                 </div>
                             </div>
 
-                            <router-link to="/login" v-else class="btn btn-outline-primary rounded-5 d-flex align-items-center gap-2 px-3">
+                            <router-link to="/login" v-else class="btn color-main d-flex align-items-center gap-2 px-3">
                                 <i class="bi bi-person fs-5"></i> Đăng nhập
                             </router-link>
                         </div>

@@ -14,7 +14,7 @@ const handleFetchProducts = async () => {
     try {
         const response = await api.get('/products')
         if (response.status === 200) {
-            products.value = response.data
+            products.value = response.data.data.data || response.data || [];
         } else {
             alert('Có lỗi xảy ra, vui lòng thử lại.')
         }

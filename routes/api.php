@@ -112,7 +112,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
     // Danh gia san pham
     Route::post('/reviews', [ReviewController::class, 'store']);
-    Route::get('/reviews/{id}', [ReviewController::class, 'index']);
 
     // Mã giảm giá
     Route::get('/voucher', [PromotionController::class, 'index']);
@@ -120,6 +119,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::patch('/voucher/{id}', [PromotionController::class, 'update']);
 });
 
+Route::get('/reviews/{id}', [ReviewController::class, 'index']);
 
 Route::get('/categories',        [CategoryController::class, 'index']);
 Route::get('banners', [BannerController::class, 'index']);
