@@ -43,7 +43,8 @@ const fetchProducts = async () => {
         const url = `products${params.toString() ? '?' + params.toString() : ''}`;
         const { data, status } = await api.get(url);
         if (status === 200) {
-            products.list = data;
+            products.list = data.data.data || [];
+            console.log(products.list)
         }
     } catch (err) {
         console.error('Error fetching products:', err);

@@ -1,12 +1,17 @@
+
 <script setup>
 import { ref, onMounted } from 'vue';
 import CreateAddress from './CreateAddress.vue';
 import api from '../../axios';
+import ConfirmBox from '../../components/box_alert/ConfirmBox.vue';
 
 // State quản lý Modal
 const openModal = ref(false);
 const mode = ref('create');
 const selectedAddress = ref(null); // Biến lưu địa chỉ đang sửa
+
+// loading
+const isLoanding = ref(false);
 
 // Mở modal thêm mới
 const handleAddAddress = () => {
@@ -15,10 +20,14 @@ const handleAddAddress = () => {
     openModal.value = true;
 };
 
+
+
+
+
 // Mở modal cập nhật (Sửa lỗi gọi hàm openModal trực tiếp trong template)
 const handleEditAddress = (addr) => {
     selectedAddress.value = addr;
-    mode.value = 'edit';
+    mode.value = 'update';
     openModal.value = true;
 };
 
@@ -38,6 +47,7 @@ const addresses = ref([]);
 
 const handleFetchAddress = async () => {
     try {
+        isLoanding.value = true;
         const res = await api.get('/addresses');
         if (res.status === 200) {
             addresses.value = res.data;
@@ -45,27 +55,62 @@ const handleFetchAddress = async () => {
         }
     } catch (err) {
         console.log('Lỗi khi gọi API: ', err);
+    } finally {
+        isLoanding.value = false;
     }
 };
 
-const deleteAddress = async (id) => {
-    if (confirm('Bạn có chắc muốn xóa địa chỉ này?')) {
-        // Cần gọi API xóa thật (nếu có API)
-        // await api.delete(`/addresses/${id}`);
 
-        // Cập nhật giao diện (Sửa logic lọc theo address_id)
-        addresses.value = addresses.value.filter(a => a.address_id !== id);
-    }
-};
 
-const setDefault = async (id) => {
+const setAddressDefault = async (id) => {
     // Cần gọi API set default thật (nếu có API)
+    try {
+        const res = await api.put(`/addresses/default/${id}`);
+        if (res.status === 200) {
+            addresses.value = addresses.value.map(addr => ({
+            ...addr,
+            is_default: addr.address_id === id ? 1 : 0
+        }));
 
-    // Cập nhật giao diện (Sửa logic dùng is_default và address_id)
-    addresses.value.forEach(a => {
-        a.is_default = a.address_id === id;
-    });
+        // Đưa default lên đầu
+        addresses.value.sort((a, b) => b.is_default - a.is_default);
+        }
+    } catch (err) {
+        console.log('Lỗi khi gọi API: ', err);
+    }
 };
+const handleDeleteAddress = async (id) => {
+    try {
+        const res = await api.delete(`/addresses/${id}`);
+        if (res.status === 200) {
+            addresses.value = addresses.value.filter(addr => addr.address_id !== id);
+            // handleFetchAddress();
+        }
+    } catch (err) {
+        console.log('Lỗi khi gọi API: ', err);
+    }
+};
+
+// modal xoa dia chi
+const openModalConfirm = ref(false);
+const messageCofirm = ref('');
+const addressIdToDelete = ref(null);
+
+const closeModalConfirm = () => {
+    openModalConfirm.value = false;
+}
+const activeModalCofirm = () => {
+    handleDeleteAddress(addressIdToDelete.value);
+    addressIdToDelete.value = null;
+    openModalConfirm.value = false;
+    // deleteAddress(selectedAddress.value.address_id);
+}
+const deleteAddress = (id) => {
+    addressIdToDelete.value = id;
+    openModalConfirm.value = true;
+    messageCofirm.value = 'Bạn có chắc chắn muốn xóa địa chỉ này?';
+};
+
 
 onMounted(() => {
     handleFetchAddress();
@@ -73,7 +118,8 @@ onMounted(() => {
 </script>
 
 <template>
-    <CreateAddress :open-modal="openModal" :mode="mode" :address-data="selectedAddress" @close="handleCloseModal"
+    <ConfirmBox :show="openModalConfirm" :message="messageCofirm" @cancel="closeModalConfirm" @confirm="activeModalCofirm"/>
+    <CreateAddress :open-modal="openModal" :mode="mode"  :edit-data="selectedAddress"  @close="handleCloseModal"
         @save="handleSaveModal" />
 
     <div class="card border-0 shadow-sm rounded-4 h-100 container">
@@ -91,7 +137,10 @@ onMounted(() => {
         <hr class="mx-4 mt-2 opacity-25">
 
         <div class="card-body px-4 py-2">
-            <div v-if="addresses.length > 0">
+            <div v-if="isLoanding" class="text-center py-5">
+                <div class="spinner-border text-primary" role="status"></div>
+            </div>
+            <div v-else-if="addresses.length > 0">
                 <div v-for="(addr, index) in addresses" :key="addr.address_id" class="address-item py-4 border-bottom">
                     <div class="row">
 
@@ -125,13 +174,13 @@ onMounted(() => {
 
                             <div class="d-flex gap-3">
                                 <button class="btn btn-link p-0 text-decoration-none text-brand fw-medium small"
-                                    @click="emit('edit', addr)">
+                                    @click="handleEditAddress(addr)">
                                     Cập nhật
                                 </button>
 
                                 <button v-if="addr.is_default !== 1"
-                                    class="btn btn-link p-0 text-decoration-none text-muted fw-medium small hover-danger"
-                                    @click="emit('delete', addr.address_id)">
+                                    class="btn btn-link p-0 text-decoration-none text-danger fw-medium small hover-danger"
+                                    @click="deleteAddress(addr.address_id)">
                                     Xóa
                                 </button>
                             </div>
@@ -140,8 +189,8 @@ onMounted(() => {
                                 Mặc định
                             </span>
                             <button v-else
-                                class="btn btn-outline-secondary btn-sm rounded-1 px-3 mt-1" style="font-size: 12px;"
-                                @click="emit('set-default', addr.address_id)">
+                                class="btn btn-outline-secondary border-main color-main btn-sm rounded-1 px-3 mt-1" style="font-size: 12px;"
+                                @click="setAddressDefault(addr.address_id)">
                                 Thiết lập mặc định
                             </button>
 

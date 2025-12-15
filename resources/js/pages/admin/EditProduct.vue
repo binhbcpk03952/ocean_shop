@@ -367,7 +367,11 @@ const handleUpdateProduct = async () => {
     console.log('---------------------------------');
 
     try {
-        const response = await api.post(`/products/${product_id}`, formData); // Sử dụng api.post với _method PUT
+        const response = await api.post(`/products/${product_id}`, formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data',
+            },
+        }); // Sử dụng api.post với _method PUT
 
         if (response.data.status === true) {
             alert(response.data.message);

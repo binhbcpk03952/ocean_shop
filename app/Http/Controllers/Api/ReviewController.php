@@ -10,11 +10,12 @@ use Illuminate\Support\Facades\Auth;
 class ReviewController extends Controller
 {
     // Lấy review theo product
-    public function index($productId)
+    public function getByProduct($productId)
     {
-        $reviews = Review::with('user')   // nếu muốn lấy thông tin user đã review
-            ->where('product_id', $productId)
-            ->orderBy('created_at', 'desc')
+        $reviews = Review::where('product_id', $productId)
+            ->where('status', 'approved')
+            ->with(['user:user_id,name,email'])
+            ->orderBy('review_id', 'DESC')
             ->get();
 
         return response()->json([
@@ -24,20 +25,18 @@ class ReviewController extends Controller
         ]);
     }
 
-
-    // Tạo review (chỉ 1 lần)
+    // Gửi review
     public function store(Request $request)
     {
         $request->validate([
-            'product_id' => 'required',
+            'product_id' => 'required|integer',
             'rating'     => 'required|integer|min:1|max:5',
             'content'    => 'nullable|string',
         ]);
 
-        // Check user đã đánh giá chưa
         $exists = Review::where('user_id', Auth::id())
             ->where('product_id', $request->product_id)
-            ->first();
+            ->exists();
 
         if ($exists) {
             return response()->json([
@@ -45,31 +44,47 @@ class ReviewController extends Controller
             ], 400);
         }
 
-        // Tạo mới
         $review = Review::create([
             'user_id'    => Auth::id(),
             'product_id' => $request->product_id,
             'rating'     => $request->rating,
             'content'    => $request->content,
+            'status'     => 'approved',
         ]);
 
-        return response()->json($review);
+        return response()->json($review, 201);
     }
 
-    // User được phép sửa đánh giá
+    // Cập nhật review
     public function update(Request $request, $id)
     {
         $review = Review::findOrFail($id);
-
-        if ($review->user_id !== Auth::id()) {
+        $user_id = $request->user()->user_id;
+        if ($review->user_id !== $user_id) {
             return response()->json(['message' => 'Không có quyền sửa'], 403);
         }
 
-        $review->update([
-            'rating'  => $request->rating,
-            'content' => $request->content,
+        $request->validate([
+            'rating'  => 'required|integer|min:1|max:5',
+            'content' => 'nullable|string',
         ]);
 
+        $review->update($request->only('rating', 'content'));
+
         return response()->json(['message' => 'Cập nhật thành công']);
+    }
+
+    // Xóa review
+    public function destroy($id)
+    {
+        $review = Review::findOrFail($id);
+
+        if ($review->user_id !== Auth::id() && optional(Auth::user())->role !== 'admin') {
+            return response()->json(['message' => 'Không có quyền xóa'], 403);
+        }
+
+        $review->delete();
+
+        return response()->json(['message' => 'Xóa thành công']);
     }
 }

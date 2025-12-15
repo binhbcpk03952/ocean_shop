@@ -1,14 +1,28 @@
 <script setup>
-import { reactive, onMounted, ref, toRaw } from 'vue';
-import api from '../../axios'; // Đảm bảo đường dẫn đúng
+import { reactive, onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
+import api from '../../axios';
 import CategoryFormItem from '../../components/admin/CategoryFormItem.vue';
 
 const router = useRouter();
 const categories = reactive({ items: [] });
 const error = ref({});
 
-// 1. Fetch Danh mục
+const product = reactive({
+    nameProduct: '',
+    price: 0,
+    description: '',
+    category_id: null,
+    variants: [
+        {
+            color: '#000000',
+            images: [],
+            imagePreviews: [],
+            sizes: [{ size: '', stock: 0, price: 0 }],
+        },
+    ],
+});
+
 const handleFetchCategories = async () => {
     try {
         const res = await api.get('/categories');
@@ -16,7 +30,7 @@ const handleFetchCategories = async () => {
             categories.items = res.data;
         }
     } catch (e) {
-        console.error('Lỗi lấy danh mục:', e);
+        console.error(e);
     }
 };
 
@@ -24,7 +38,6 @@ onMounted(() => {
     handleFetchCategories();
 });
 
-// 2. Validate Form
 const validateForm = () => {
     error.value = {};
     let isValid = true;
@@ -42,89 +55,97 @@ const validateForm = () => {
         isValid = false;
     }
 
-    // Kiểm tra biến thể: Phải có ít nhất 1 biến thể và mỗi biến thể phải có ít nhất 1 ảnh
     if (product.variants.length === 0) {
         alert('Cần ít nhất 1 biến thể sản phẩm.');
         isValid = false;
     } else {
-        product.variants.forEach((v, index) => {
+        const seenColors = new Set();
+
+        product.variants.forEach((v, vIndex) => {
+            if (seenColors.has(v.color)) {
+                error.value[`variantColor_${vIndex}`] = 'Màu sắc này đã bị trùng lặp.';
+                isValid = false;
+            } else {
+                seenColors.add(v.color);
+            }
+
             if (v.images.length === 0) {
-                alert(`Biến thể màu ${v.color} chưa có hình ảnh nào.`);
+                error.value[`variantImage_${vIndex}`] = 'Cần ít nhất 1 hình ảnh.';
                 isValid = false;
             }
+
+            const seenSizes = new Set();
+            if (v.sizes.length === 0) {
+                isValid = false;
+            }
+
+            v.sizes.forEach((s, sIndex) => {
+                if (!s.size || s.size.trim() === '') {
+                    error.value[`variantSize_${vIndex}_${sIndex}`] = 'Nhập tên size.';
+                    isValid = false;
+                } else {
+                    const sizeName = s.size.trim().toUpperCase();
+                    if (seenSizes.has(sizeName)) {
+                        error.value[`variantSize_${vIndex}_${sIndex}`] = 'Size bị trùng.';
+                        isValid = false;
+                    } else {
+                        seenSizes.add(sizeName);
+                    }
+                }
+
+                if (s.stock === '' || s.stock < 0) {
+                    error.value[`variantStock_${vIndex}_${sIndex}`] = 'SL không hợp lệ.';
+                    isValid = false;
+                }
+
+                if (s.price < 0) {
+                    error.value[`variantPrice_${vIndex}_${sIndex}`] = 'Giá không âm.';
+                    isValid = false;
+                }
+            });
         });
     }
 
     return isValid;
-}
+};
 
-// 3. Khởi tạo Object Product
-const product = reactive({
-    nameProduct: '',
-    price: 0,
-    description: '',
-    category_id: null,
-    // Không còn mảng images (chung) nữa
-    variants: [
-        {
-            color: '#000000',
-            // File ảnh thực tế để gửi đi
-            images: [],
-            // URL blob để preview
-            imagePreviews: [],
-            sizes: [
-                { size: '', stock: 0, price: 0 }
-            ],
-        },
-    ],
-});
-
-// 4. Xử lý Upload ảnh trong Biến thể
 const handleVariantImageUpload = (event, vIndex) => {
     const files = Array.from(event.target.files);
     if(files.length === 0) return;
 
-    // Nối thêm file vào mảng hiện tại thay vì ghi đè
     const newPreviews = files.map(file => ({
         url: URL.createObjectURL(file),
         file: file
     }));
 
-    // Cập nhật vào state
     product.variants[vIndex].images.push(...files);
     product.variants[vIndex].imagePreviews.push(...newPreviews);
-
-    // Reset input file để có thể chọn lại cùng 1 file nếu lỡ xóa
     event.target.value = '';
-}
+};
 
-// 5. Xóa ảnh trong biến thể
 const removeVariantImage = (vIndex, imgIndex) => {
-    URL.revokeObjectURL(product.variants[vIndex].imagePreviews[imgIndex].url); // Giải phóng bộ nhớ
+    URL.revokeObjectURL(product.variants[vIndex].imagePreviews[imgIndex].url);
     product.variants[vIndex].imagePreviews.splice(imgIndex, 1);
     product.variants[vIndex].images.splice(imgIndex, 1);
-}
+};
 
-// 6. Đặt làm ảnh chính (Đưa lên đầu mảng)
 const setMainImage = (vIndex, imgIndex) => {
     const variant = product.variants[vIndex];
-
-    // Di chuyển trong mảng Preview
     const itemToMove = variant.imagePreviews.splice(imgIndex, 1)[0];
     variant.imagePreviews.unshift(itemToMove);
-
-    // Di chuyển trong mảng File thực tế
     const fileToMove = variant.images.splice(imgIndex, 1)[0];
     variant.images.unshift(fileToMove);
-}
+};
 
 const handleCategorySelected = (id) => {
     product.category_id = id;
-}
+};
 
-// 7. Gửi dữ liệu (Submit)
 const handleAddProduct = async () => {
-    if (!validateForm()) return;
+    if (!validateForm()) {
+        alert('Vui lòng kiểm tra lại các trường báo lỗi.');
+        return;
+    }
 
     const formData = new FormData();
     formData.append('name', product.nameProduct);
@@ -132,7 +153,6 @@ const handleAddProduct = async () => {
     formData.append('description', product.description);
     formData.append('category_id', product.category_id);
 
-    // Chuẩn bị JSON variants (chỉ chứa thông tin text, không chứa file)
     const variantsData = product.variants.map(variant => ({
         color: variant.color,
         sizes: variant.sizes,
@@ -145,32 +165,24 @@ const handleAddProduct = async () => {
         });
     });
 
-    // Gửi dữ liệu lên API
-    console.log('Dữ liệu FormData đã chuẩn bị để gửi đi:');
-    for (let [key, value] of formData.entries()) {
-        console.log(`- ${key}:`, value);
-    }
-
-
-
-
     try {
         const response = await api.post(`/products`, formData, {
-            headers: {
-                'Content-Type': 'multipart/form-data',
-            },
-        }); // Bỏ header Content-Type thủ công
+            headers: { 'Content-Type': 'multipart/form-data' },
+        });
 
         if (response.data.status === true) {
             alert(response.data.message);
             router.push('/admin/products');
         } else {
-            console.log(response.data.message);
             alert('Lỗi: ' + response.data.message);
         }
     } catch (err) {
-        console.error('Lỗi API:', err);
-        alert('Có lỗi xảy ra khi thêm sản phẩm');
+        console.error(err);
+        if (err.response && err.response.data && err.response.data.errors) {
+            error.value = err.response.data.errors;
+        } else {
+            alert('Có lỗi xảy ra khi thêm sản phẩm');
+        }
     }
 };
 </script>
@@ -195,19 +207,19 @@ const handleAddProduct = async () => {
                     <div class="card-body">
                         <div class="mb-3">
                             <label class="form-label fw-medium">Tên sản phẩm <span class="text-danger">*</span></label>
-                            <input v-model="product.nameProduct" type="text" class="form-control" placeholder="Ví dụ: Áo thun Polo..." />
-                            <small v-if="error.nameProduct" class="text-danger">{{ error.nameProduct }}</small>
+                            <input v-model="product.nameProduct" type="text" class="form-control" :class="{'is-invalid': error.nameProduct}" placeholder="Ví dụ: Áo thun Polo..." />
+                            <div class="invalid-feedback">{{ error.nameProduct }}</div>
                         </div>
 
                         <div class="mb-3">
                             <label class="form-label fw-medium">Giá niêm yết (VNĐ) <span class="text-danger">*</span></label>
-                            <input v-model="product.price" type="number" class="form-control" placeholder="0" />
-                            <small v-if="error.price" class="text-danger">{{ error.price }}</small>
+                            <input v-model="product.price" type="number" class="form-control" :class="{'is-invalid': error.price}" placeholder="0" />
+                            <div class="invalid-feedback">{{ error.price }}</div>
                         </div>
 
                         <div class="mb-3">
                             <label class="form-label fw-medium">Danh mục <span class="text-danger">*</span></label>
-                            <div class="border rounded p-2 bg-light category-list">
+                            <div class="border rounded p-2 bg-light category-list" :class="{'border-danger': error.category_id}">
                                 <ul class="list-unstyled mb-0">
                                     <CategoryFormItem v-for="cat in categories.items" :key="cat.category_id" :cat="cat"
                                         :level="0" :current-parent-id="categories.parent"
@@ -230,8 +242,11 @@ const handleAddProduct = async () => {
                     <div class="card-header bg-light py-2 d-flex justify-content-between align-items-center">
                         <div class="d-flex align-items-center gap-2">
                             <span class="badge bg-primary rounded-pill">#{{ vIndex + 1 }}</span>
-                            <span class="fw-bold text-dark">Biến thể màu sắc</span>
+                            <span class="fw-bold text-dark">Màu sắc:</span>
                             <input type="color" v-model="variant.color" class="form-control form-control-color border-0 p-0" title="Chọn màu">
+                            <small v-if="error[`variantColor_${vIndex}`]" class="text-danger fw-bold ms-2">
+                                <i class="bi bi-exclamation-circle"></i> {{ error[`variantColor_${vIndex}`] }}
+                            </small>
                         </div>
                         <button v-if="product.variants.length > 1" type="button" class="btn btn-close" @click="product.variants.splice(vIndex, 1)"></button>
                     </div>
@@ -239,11 +254,7 @@ const handleAddProduct = async () => {
                     <div class="card-body">
                         <div class="row g-4">
                             <div class="col-12">
-                                <label class="form-label fw-medium mb-1">Hình ảnh cho màu này</label>
-                                <p class="text-muted small fst-italic mb-2">
-                                    Ảnh đầu tiên sẽ là <strong>ảnh đại diện</strong> cho màu sắc này. Nhấn vào ngôi sao để chọn ảnh chính.
-                                </p>
-
+                                <label class="form-label fw-medium mb-1">Hình ảnh <span class="text-danger">*</span></label>
                                 <div class="upload-zone mb-3">
                                     <label class="btn btn-outline-primary btn-sm w-100 border-dashed py-3">
                                         <i class="bi bi-cloud-arrow-up fs-5 d-block"></i>
@@ -251,13 +262,14 @@ const handleAddProduct = async () => {
                                         <input type="file" multiple class="d-none" @change="handleVariantImageUpload($event, vIndex)" accept="image/*">
                                     </label>
                                 </div>
+                                <div v-if="error[`variantImage_${vIndex}`]" class="text-danger small mb-2">
+                                    <i class="bi bi-exclamation-circle"></i> {{ error[`variantImage_${vIndex}`] }}
+                                </div>
 
                                 <div v-if="variant.imagePreviews.length" class="d-flex flex-wrap gap-3">
                                     <div v-for="(img, i) in variant.imagePreviews" :key="i" class="position-relative image-card" :class="{'is-main': i === 0}">
                                         <img :src="img.url" class="rounded border" />
-
                                         <span v-if="i === 0" class="position-absolute top-0 start-0 badge bg-warning text-dark m-1 shadow-sm">Ảnh chính</span>
-
                                         <div class="image-actions">
                                             <button v-if="i !== 0" type="button" class="btn btn-sm btn-light text-warning mb-1" @click="setMainImage(vIndex, i)" title="Đặt làm ảnh chính">
                                                 <i class="bi bi-star-fill"></i>
@@ -281,17 +293,29 @@ const handleAddProduct = async () => {
                                     <table class="table table-bordered table-sm align-middle text-center mb-0">
                                         <thead class="bg-light text-secondary">
                                             <tr>
-                                                <th style="width: 30%">Size</th>
-                                                <th style="width: 30%">Số lượng</th>
-                                                <th style="width: 30%">Giá riêng (Optional)</th>
+                                                <th style="width: 30%">Size <span class="text-danger">*</span></th>
+                                                <th style="width: 30%">Số lượng <span class="text-danger">*</span></th>
+                                                <th style="width: 30%">Giá riêng</th>
                                                 <th style="width: 10%"></th>
                                             </tr>
                                         </thead>
                                         <tbody>
                                             <tr v-for="(size, sIndex) in variant.sizes" :key="sIndex">
-                                                <td><input v-model="size.size" type="text" class="form-control form-control-sm text-center" placeholder="S, M, L..." /></td>
-                                                <td><input v-model="size.stock" type="number" class="form-control form-control-sm text-center" /></td>
-                                                <td><input v-model="size.price" type="number" class="form-control form-control-sm text-center" placeholder="Mặc định" /></td>
+                                                <td>
+                                                    <input v-model="size.size" type="text" class="form-control form-control-sm text-center"
+                                                        :class="{'is-invalid': error[`variantSize_${vIndex}_${sIndex}`]}" placeholder="S, M..." />
+                                                    <div class="invalid-feedback text-xs text-start ps-2">{{ error[`variantSize_${vIndex}_${sIndex}`] }}</div>
+                                                </td>
+                                                <td>
+                                                    <input v-model="size.stock" type="number" class="form-control form-control-sm text-center"
+                                                        :class="{'is-invalid': error[`variantStock_${vIndex}_${sIndex}`]}" />
+                                                    <div class="invalid-feedback text-xs text-start ps-2">{{ error[`variantStock_${vIndex}_${sIndex}`] }}</div>
+                                                </td>
+                                                <td>
+                                                    <input v-model="size.price" type="number" class="form-control form-control-sm text-center"
+                                                        :class="{'is-invalid': error[`variantPrice_${vIndex}_${sIndex}`]}" placeholder="Mặc định" />
+                                                    <div class="invalid-feedback text-xs text-start ps-2">{{ error[`variantPrice_${vIndex}_${sIndex}`] }}</div>
+                                                </td>
                                                 <td>
                                                     <button type="button" class="btn btn-link text-danger p-0" @click="variant.sizes.splice(sIndex, 1)">
                                                         <i class="bi bi-x-circle fs-5"></i>
@@ -320,38 +344,29 @@ const handleAddProduct = async () => {
 </template>
 
 <style scoped>
-/* Custom Scrollbar cho danh mục */
 .category-list {
     max-height: 200px;
     overflow-y: auto;
 }
-
-/* Style cho vùng upload */
 .border-dashed {
     border-style: dashed !important;
 }
-
-/* Style cho Grid ảnh */
 .image-card {
     width: 100px;
     height: 100px;
     overflow: hidden;
     cursor: pointer;
     transition: all 0.2s;
+    border-radius: 4px;
 }
-
 .image-card img {
     width: 100%;
     height: 100%;
     object-fit: cover;
 }
-
 .image-card.is-main {
-    border: 2px solid #ffc107 !important; /* Viền vàng cho ảnh chính */
-    border-radius: 6px;
+    border: 3px solid #ffc107 !important;
 }
-
-/* Hiệu ứng hover hiện nút thao tác */
 .image-actions {
     position: absolute;
     top: 0;
@@ -365,10 +380,11 @@ const handleAddProduct = async () => {
     align-items: center;
     opacity: 0;
     transition: opacity 0.2s;
-    border-radius: 4px;
 }
-
 .image-card:hover .image-actions {
     opacity: 1;
+}
+.text-xs {
+    font-size: 0.75rem;
 }
 </style>

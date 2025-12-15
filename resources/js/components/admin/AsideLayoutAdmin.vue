@@ -14,7 +14,7 @@ const isActive = (path) => {
             <ul class="ps-1">
                 <li class="mt-4">
                     <router-link to="/admin" class="text-white text-decoration-none"
-                        :class="{ activepage: isActive('/admin') }">Dashboard</router-link>
+                        :class="{ activepage: isActive('/admin') }">Thống kê</router-link>
                 </li>
                 <li class="mt-4">
                     <router-link to="/admin/products" class="text-white text-decoration-none"
@@ -61,5 +61,6 @@ const isActive = (path) => {
 
 .activepage {
     color: #3497E0 !important;
+    font-weight: bold;
 }
 </style>

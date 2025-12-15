@@ -239,7 +239,7 @@ const total = computed(() => {
 const formatCurrency = (value) => {
     return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value);
 };
-
+const isLoandingCheckOut = ref(false)
 const handleOrder = async () => {
     const orderData = {
         address_id: addressDefault.value.address_id,
@@ -257,8 +257,10 @@ const handleOrder = async () => {
             price: item.variant?.price ?? item.variant?.product?.price
         }))
     }
+
     if (paymentMe.id === 'cod') {
         try {
+            isLoandingCheckOut.value = true
             const res = await api.post('orders', orderData)
             console.log('Đặt hàng thành công:', res.data)
             router.push('orders_success')
@@ -268,6 +270,7 @@ const handleOrder = async () => {
         }
     } else if (paymentMe.id === 'vnpay') {
         try {
+            isLoandingCheckOut.value = true
             const res = await api.post('/vnpay_payment', orderData)
             if (res.data.payment_url) {
                 console.log(res.data.payment_url);
@@ -275,6 +278,9 @@ const handleOrder = async () => {
             }
         } catch (err) {
             console.log('Loi khi goi APi: ', err);
+        }
+        finally {
+            isLoandingCheckOut.value = false
         }
     }
 }
@@ -295,6 +301,13 @@ onMounted(() => {
 
     <ModalChangeVoucher :open-modal="openModalVoucher" :voucher-id="voucherId" :vouchers="vouchers"
         @close="closeModalVoucher" @save="saveModalVoucher" />
+    <div v-if="isLoandingCheckOut" class="modal fade show" tabindex="-1"
+        style="display: block; background-color: rgba(0,0,0,0.5)" aria-modal="true" role="dialog">
+        <div class="text-center py-5">
+                <div class="spinner-border text-primary" role="status"></div>
+                Đang đặt đơn hàng...
+            </div>
+    </div>
     <div class="checkout-page py-5 bg-light min-vh-100">
         <div class="container">
             <form @submit.prevent="handleOrder">

@@ -17,6 +17,8 @@ use App\Http\Controllers\GeminiAIController;
 use App\Http\Controllers\SocialAuthController;
 use App\Http\Controllers\Api\ReviewController;
 use App\Http\Controllers\Api\PromotionController;
+use App\Http\Controllers\Api\DashboardController;
+use App\Http\Controllers\Api\ReportController;
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -65,14 +67,17 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('profile', [AuthController::class, 'updateProfile']);
     Route::put('change-password', [AuthController::class, 'changePassword']);
 
-
+    Route::get('/dashboard', [DashboardController::class, 'index']);
 
     // Categories
     Route::post('/categories',       [CategoryController::class, 'store']);
     Route::delete('/categories/{id}', [CategoryController::class, 'destroy']);
 
+
     // Products
     Route::post('/products', [ProductController::class, 'store']);
+    // Route::get('/admin/products', [ProductController::class, 'getAllProduct']);
+    Route::put('/products/{id}', [ProductController::class, 'update']);
 
     // Cart
     Route::get('/carts',          [CartController::class, 'index']);
@@ -91,6 +96,10 @@ Route::middleware('auth:sanctum')->group(function () {
     // route thêm địa chỉ
     Route::post('addresses', [AddressController::class, 'store']);
     Route::get('addresses', [AddressController::class, 'index']);
+    Route::delete('addresses/{id}', [AddressController::class, 'destroy']);
+    Route::put('addresses/{id}', [AddressController::class, 'update']);
+    Route::put('addresses/default/{id}', [AddressController::class, 'setDefault']);
+
 
     // route thêm đơn hàng
     Route::get('orders', [OrderController::class, 'index']);
@@ -111,15 +120,26 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::post('/logout', [AuthController::class, 'logout']);
     // Danh gia san pham
-    Route::post('/reviews', [ReviewController::class, 'store']);
 
     // Mã giảm giá
     Route::get('/voucher', [PromotionController::class, 'index']);
     Route::post('/voucher', [PromotionController::class, 'store']);
     Route::patch('/voucher/{id}', [PromotionController::class, 'update']);
-});
 
-Route::get('/reviews/{id}', [ReviewController::class, 'index']);
+    //
+    Route::delete('/reviews/{id}', [ReviewController::class, 'destroy']);
+    Route::put('/reviews/{id}', [ReviewController::class, 'update']);
+    Route::post('/reviews', [ReviewController::class, 'store']);
+
+    // thong ke
+    Route::get('/reports', [ReportController::class, 'index']);
+
+
+}); //// ====== ////
+
+Route::get('/products/{id}/reviews', [ReviewController::class, 'getByProduct']);
+
+// );
 
 Route::get('/categories',        [CategoryController::class, 'index']);
 Route::get('banners', [BannerController::class, 'index']);

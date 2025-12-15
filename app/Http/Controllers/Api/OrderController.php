@@ -6,12 +6,14 @@ use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
 use App\Models\Order;
 use App\Models\OrderItem;
+use App\Models\ProductVariant;
 use App\Models\CartItem;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\OrderSuccessMail;
 use App\Models\OrderCancellation;
 use Carbon\Carbon;
+use Exception;
 
 
 class OrderController extends Controller
@@ -103,50 +105,97 @@ class OrderController extends Controller
             'order'   => $order
         ], 200);
     }
+
     public function updateStatus(Request $request, $id)
     {
-        // 1. Validate dữ liệu đầu vào (chỉ chấp nhận các trạng thái hợp lệ)
+        // 1. Validate dữ liệu
         $request->validate([
             'status' => 'required|string|in:pending,confirmed,shipping,completed,cancelled,failed',
         ]);
 
-        try {
-            // 2. Tìm đơn hàng theo ID
-            $order = Order::find($id);
+        // 2. Tìm đơn hàng
+        $order = Order::find($id);
 
-            if (!$order) {
-                return response()->json([
-                    'message' => 'Không tìm thấy đơn hàng',
-                ], 404);
-            }
+        if (!$order) {
+            return response()->json(['message' => 'Không tìm thấy đơn hàng'], 404);
+        }
 
-            // 3. Kiểm tra logic (Tuỳ chọn: Không cho phép sửa nếu đơn đã hoàn thành hoặc đã huỷ)
-            if ($order->status == 'completed' || $order->status == 'cancelled') {
-                return response()->json([
-                    'message' => 'Không thể cập nhật trạng thái cho đơn hàng đã hoàn tất hoặc đã hủy.',
-                ], 400);
-            }
-
-            // 4. Cập nhật trạng thái
-            $old_status = $order->status; // Lưu trạng thái cũ để log nếu cần
-            $order->status = $request->status;
-            $order->save();
-
-            // 5. Trả về kết quả
+        // 3. Kiểm tra logic chặn sửa
+        if (in_array($order->status, ['completed', 'cancelled'])) {
             return response()->json([
-                'message'    => 'Cập nhật trạng thái đơn hàng thành công',
+                'message' => 'Không thể cập nhật trạng thái cho đơn hàng đã hoàn tất hoặc đã hủy.',
+            ], 400);
+        }
+
+        // Lấy trạng thái cũ và mới TRƯỚC khi vào transaction để code gọn hơn
+        $old_status = $order->status;
+        $new_status = $request->status;
+
+        // Nếu trạng thái không đổi thì return luôn, đỡ tốn tài nguyên DB
+        if ($old_status === $new_status) {
+            return response()->json(['message' => 'Trạng thái không thay đổi', 'data' => $order], 200);
+        }
+
+        // 4. Bắt đầu xử lý Transaction
+        DB::beginTransaction();
+
+        try {
+            // --- KỊCH BẢN: PENDING -> CONFIRMED (Trừ kho) ---
+            if ($old_status === 'pending' && $new_status === 'shipping') {
+                $orderItems = OrderItem::where('order_id', $order->order_id)->get();
+
+                foreach ($orderItems as $item) {
+                    // LockForUpdate: Khóa dòng dữ liệu này lại, người khác không thể mua/sửa khi transaction này chưa xong
+                    $variant = ProductVariant::lockForUpdate()->find($item->variant_id);
+
+                    if (!$variant) {
+                        throw new Exception("Biến thể sản phẩm ID {$item->variant_id} không tồn tại.");
+                    }
+
+                    // Kiểm tra tồn kho
+                    if ($variant->stock < $item->quantity) {
+                        throw new Exception("Sản phẩm {$variant->color} - Size {$variant->size} không đủ hàng (Còn: {$variant->stock}).");
+                    }
+
+                    // Trừ kho
+                    $variant->decrement('stock', $item->quantity);
+                }
+            }
+
+            // --- KỊCH BẢN (Gợi ý): CONFIRMED -> CANCELLED (Hoàn kho) ---
+            // Bạn nên cân nhắc thêm đoạn này: Nếu hủy đơn đã xác nhận thì phải cộng lại kho
+            /*
+        if ($old_status === 'confirmed' && $new_status === 'cancelled') {
+             $orderItems = OrderItem::where('order_id', $order->order_id)->get();
+             foreach ($orderItems as $item) {
+                 ProductVariant::where('variant_id', $item->variant_id)->increment('stock', $item->quantity);
+             }
+        }
+        */
+
+            // 5. Cập nhật và Lưu trạng thái
+            $order->status = $new_status;
+            $order->save(); // Chỉ lưu 1 lần duy nhất trong transaction
+
+            DB::commit(); // Xác nhận mọi thay đổi thành công
+
+            return response()->json([
+                'message'    => 'Cập nhật trạng thái thành công',
                 'order_id'   => $order->order_id,
                 'old_status' => $old_status,
                 'new_status' => $order->status,
                 'updated_at' => $order->updated_at
             ], 200);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
+            DB::rollBack(); // Có lỗi => Hoàn tác toàn bộ (Kho không trừ, Trạng thái không đổi)
+
             return response()->json([
-                'message' => 'Lỗi khi cập nhật trạng thái',
-                'error'   => $e->getMessage(),
-            ], 500);
+                'message' => 'Lỗi cập nhật: ' . $e->getMessage()
+            ], 400); // Nên trả về 400 Bad Request thay vì 500 nếu lỗi do logic (hết hàng)
         }
     }
+
+
     public function cancelOrder(Request $request, $id)
     {
         $user_id = $request->user()->user_id;

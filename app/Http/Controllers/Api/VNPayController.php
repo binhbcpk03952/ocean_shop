@@ -9,6 +9,8 @@ use Illuminate\Http\Request;
 use App\Models\Order;
 use App\Models\Cart;
 use App\Models\CartItem;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\OrderSuccessMail;
 
 class VNPayController extends Controller
 {
@@ -118,6 +120,8 @@ class VNPayController extends Controller
                     }
                 }
                 DB::commit();
+                $mail = $request->user()->email;
+                Mail::to($mail)->send(new OrderSuccessMail($order));
                 return response()->json([
                     'status' => true,
                     'message' => 'Thanh toán thành công',

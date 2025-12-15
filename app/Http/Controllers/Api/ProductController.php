@@ -7,14 +7,20 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Categories;
 use Illuminate\Support\Str;
-use Illuminate\Support\Facades\Storage;
 use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Models\ProductImage;
-use GuzzleHttp\Handler\Proxy;
+use Illuminate\Support\Facades\Storage;
+use Exception;
+use Illuminate\Container\Attributes\Log;
 
 class ProductController extends Controller
 {
+    public function getAllProduct()
+    {
+        $query = Product::with(['variant', 'image', 'categories']);
+        response()->json($query->get());
+    }
     public function index(Request $request)
     {
         $query = Product::query()
@@ -69,7 +75,7 @@ class ProductController extends Controller
 
     public function show($id)
     {
-        
+
         return Product::with(['variant', 'image', 'categories'])->findOrFail($id);
     }
 
@@ -187,6 +193,170 @@ class ProductController extends Controller
         return response()->json([
             'success' => true,
             'data' => $related
+        ]);
+    }
+    public function update(Request $request, $id)
+    {
+        // 1. Validate
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'description' => 'nullable',
+            'price' => 'required|numeric|min:0',
+            'category_id' => 'required|integer|exists:categories,category_id',
+
+            // Variants JSON string bắt buộc phải có
+            'variants' => 'required|json',
+
+            // Ảnh mới (new_variant_images) là optional khi update
+            'new_variant_images' => 'nullable|array',
+            'new_variant_images.*' => 'nullable|array',
+            'new_variant_images.*.*' => 'image|mimes:jpeg,png,jpg,gif,svg,webp|max:5000',
+        ]);
+
+        DB::beginTransaction();
+
+        try {
+            $product = Product::findOrFail($id);
+
+            // 2. Cập nhật thông tin cơ bản
+            $product->update([
+                'name' => $request->name,
+                'description' => $request->description,
+                'price' => $request->price,
+                'category_id' => $request->category_id,
+            ]);
+
+            // 3. Xử lý Variants & Images
+            $variantsData = json_decode($request->variants, true);
+            // Lưu ý: Key ở đây phải khớp với key frontend gửi lên (Vue code trước gửi: new_variant_images)
+            $newVariantImageGroups = $request->file('new_variant_images', []);
+
+            // Duyệt qua từng nhóm biến thể (Từng màu)
+            foreach ($variantsData as $index => $groupData) {
+
+                // --- A. XỬ LÝ XÓA (Delete) ---
+
+                // Xóa các Size đã bị user xóa
+                if (!empty($groupData['deletedSizeIds'])) {
+                    // Xóa trong DB bảng variants
+                    $product->variant()->whereIn('variant_id', $groupData['deletedSizeIds'])->delete();
+                    // Tùy chọn: Xóa luôn image liên kết với variant_id này nếu DB không set cascade
+                    $product->image()->whereIn('variant_id', $groupData['deletedSizeIds'])->delete();
+                }
+
+                // Xóa các Ảnh đã bị user xóa (Ảnh cũ)
+                if (!empty($groupData['deletedImageIds'])) {
+                    $imagesToDelete = $product->image()->whereIn('image_id', $groupData['deletedImageIds'])->get();
+                    foreach ($imagesToDelete as $img) {
+                        // Xóa file vật lý (Kiểm tra xem ảnh có đang được dùng bởi variant khác không nếu cần thiết)
+                        // Ở logic này mỗi dòng image là riêng biệt nên xóa thẳng
+                        if (\Storage::disk('public')->exists($img->image_url)) {
+                            \Storage::disk('public')->delete($img->image_url);
+                        }
+                        $img->delete();
+                    }
+                }
+
+                // --- B. XỬ LÝ SIZES (Update & Create) ---
+
+                $currentGroupVariantIds = []; // Mảng chứa ID của các size ĐANG HOẠT ĐỘNG của màu này
+
+                foreach ($groupData['sizes'] as $sizeItem) {
+                    // Kiểm tra: Nếu có ID thì là Update, không có (hoặc null) thì là Create
+                    if (isset($sizeItem['id']) && $sizeItem['id']) {
+                        // Update Size cũ
+                        $variant = $product->variant()->find($sizeItem['id']);
+                        if ($variant) {
+                            $variant->update([
+                                'color' => $groupData['color'], // Cập nhật màu (phòng trường hợp user đổi màu)
+                                'size'  => $sizeItem['size'],
+                                'stock' => $sizeItem['stock'],
+                                'price' => ($sizeItem['price'] && $sizeItem['price'] > 0) ? $sizeItem['price'] : $product->price,
+                            ]);
+                            $currentGroupVariantIds[] = $variant->variant_id;
+                        }
+                    } else {
+                        // Create Size mới
+                        $newVariant = $product->variant()->create([
+                            'color' => $groupData['color'],
+                            'size'  => $sizeItem['size'],
+                            'stock' => $sizeItem['stock'],
+                            'price' => ($sizeItem['price'] && $sizeItem['price'] > 0) ? $sizeItem['price'] : $product->price,
+                        ]);
+                        $currentGroupVariantIds[] = $newVariant->variant_id;
+
+                        // TODO (Nâng cao): Nếu muốn size mới này tự động nhận các ảnh CŨ của nhóm màu,
+                        // bạn cần query lấy ảnh của các variant anh em và duplicate record image cho variant mới này.
+                    }
+                }
+
+                // --- C. XỬ LÝ ẢNH MỚI (Upload New Images) ---
+
+                // Kiểm tra xem nhóm màu hiện tại ($index) có file mới gửi lên không
+                if (isset($newVariantImageGroups[$index])) {
+                    foreach ($newVariantImageGroups[$index] as $imgKey => $file) {
+
+                        // Tạo tên file
+                        $fileName = time() . '_' . Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME)) . '.' . $file->getClientOriginalExtension();
+
+                        // Lưu file
+                        $path = $file->storeAs('images/products', $fileName, 'public');
+
+                        // Gán ảnh này cho TẤT CẢ variants (sizes) đang hoạt động của nhóm màu này
+                        foreach ($currentGroupVariantIds as $variantId) {
+                            $product->image()->create([
+                                'product_id' => $product->product_id,
+                                'variant_id' => $variantId,
+                                'image_url'  => $path,
+                                'is_main'    => 0, // Ảnh thêm mới thường không set làm ảnh chính ngay, hoặc tùy logic frontend
+                            ]);
+                        }
+                    }
+                }
+            }
+
+            DB::commit();
+
+            return response()->json([
+                'status' => true,
+                'message' => 'Cập nhật sản phẩm thành công!',
+                'data' => $product
+            ], 200);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            \Log::error($e->getMessage()); // Ghi log lỗi để debug
+
+            return response()->json([
+                'status' => false,
+                'message' => 'Lỗi cập nhật: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+    public function destroy($id)
+    {
+        $product = Product::with(['variants.images'])->findOrFail($id);
+
+        // 1. Xóa file cứng trong storage
+        foreach ($product->variants as $variant) {
+            foreach ($variant->images as $image) {
+                if (\Storage::exists($image->path)) {
+                    \Storage::delete($image->path);
+                }
+            }
+        }
+
+        // 2. Xóa bản ghi liên quan
+        foreach ($product->variants as $variant) {
+            $variant->images()->delete(); // xóa bảng product_images
+        }
+        $product->variants()->delete(); // xóa bảng product_variants
+
+        // 3. Xóa sản phẩm
+        $product->delete();
+
+        return response()->json([
+            'message' => 'Xóa sản phẩm thành công!',
+            'status' => true
         ]);
     }
 }
