@@ -6,6 +6,7 @@ import { useRouter, useRoute } from 'vue-router';
 
 const router = useRouter();
 const route = useRoute();
+const loading = ref(false);
 
 
 const products = ref([]);
@@ -18,6 +19,8 @@ const selectedCategoryId = ref(null); // Lưu ID danh mục đang chọn
 // Hàm lấy sản phẩm linh động (nhận vào object params)
 const fetchProducts = async (params = {}) => {
     try {
+        loading.value = true;
+
         // Mặc định gọi /products, axios sẽ tự ghép params vào sau (vd: ?category_id=1)
         const response = await api.get('/products', { params });
 
@@ -27,6 +30,8 @@ const fetchProducts = async (params = {}) => {
         }
     } catch (error) {
         console.error("Lỗi lấy danh sách sản phẩm:", error);
+    } finally {
+        loading.value = false;
     }
 };
 
@@ -126,7 +131,12 @@ onMounted(() => {
         </div>
 
         <div class="row g-3">
-            <template v-if="products.length > 0">
+            <div v-if="loading" class="text-center my-5">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+            </div>
+            <template v-else-if="products.length > 0">
             <BoxProduct v-for="product in products" :key="product.product_id" :product="product"
                 class="col-6 col-md-4 col-lg-3" />
             </template>

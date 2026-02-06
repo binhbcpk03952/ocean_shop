@@ -4,6 +4,28 @@ import api from '../../axios'; // Đảm bảo đường dẫn đúng
 import { useRouter, useRoute } from 'vue-router'; // Import useRoute để lấy ID sản phẩm
 import CategoryFormItem from '../../components/admin/CategoryFormItem.vue';
 
+
+import Quill from 'quill'
+import 'quill/dist/quill.snow.css'
+
+// let quill = null
+// const editor = ref(null)
+// onMounted(() => {
+//     quill = new Quill(editor.value, {
+//         theme: 'snow',
+//         placeholder: 'Nhập chi tiết sản phẩm...',
+//         modules: {
+//             toolbar: [
+//                 [{ header: [1, 2, 3, false] }],
+//                 ['bold', 'italic', 'underline'],
+//                 [{ list: 'ordered' }, { list: 'bullet' }],
+//                 ['link'],
+//             ],
+//         },
+//     })
+// })
+
+
 const router = useRouter();
 const route = useRoute(); // Dùng để lấy product_id từ URL
 const product_id = route.params.id; // Giả sử route là /admin/products/edit/:id
@@ -12,6 +34,7 @@ const categories = reactive({ items: [] });
 const error = ref({});
 const isLoading = ref(true); // Biến để hiển thị loading state
 const initialProductData = ref(null); // Để lưu trạng thái ban đầu khi fetch
+
 
 // --- FETCH DỮ LIỆU BAN ĐẦU ---
 const handleFetchCategories = async () => {
@@ -461,6 +484,7 @@ watch(() => product.variants.map(v => v.sizes.map(s => s.size)), (newSizes, oldS
                             <label class="form-label fw-medium">Mô tả chi tiết</label>
                             <textarea v-model="product.description" class="form-control" rows="5"
                                 placeholder="Nhập mô tả sản phẩm..."></textarea>
+                            <!-- <div ref="editor" class="bg-white border rounded"></div> -->
                         </div>
                     </div>
                 </div>

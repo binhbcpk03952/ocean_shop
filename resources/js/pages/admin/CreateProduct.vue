@@ -4,6 +4,27 @@ import { useRouter } from 'vue-router';
 import api from '../../axios';
 import CategoryFormItem from '../../components/admin/CategoryFormItem.vue';
 
+
+import Quill from 'quill'
+import 'quill/dist/quill.snow.css'
+
+let quill = null
+const editor = ref(null)
+onMounted(() => {
+    quill = new Quill(editor.value, {
+        theme: 'snow',
+        placeholder: 'Nhập chi tiết sản phẩm...',
+        modules: {
+            toolbar: [
+                [{ header: [1, 2, 3, false] }],
+                ['bold', 'italic', 'underline'],
+                [{ list: 'ordered' }, { list: 'bullet' }],
+                ['link'],
+            ],
+        },
+    })
+})
+
 const router = useRouter();
 const categories = reactive({ items: [] });
 const error = ref({});
@@ -146,6 +167,7 @@ const handleAddProduct = async () => {
         alert('Vui lòng kiểm tra lại các trường báo lỗi.');
         return;
     }
+    product.description = quill.root.innerHTML;
 
     const formData = new FormData();
     formData.append('name', product.nameProduct);
@@ -231,7 +253,8 @@ const handleAddProduct = async () => {
 
                         <div class="mb-3">
                             <label class="form-label fw-medium">Mô tả chi tiết</label>
-                            <textarea v-model="product.description" class="form-control" rows="5" placeholder="Nhập mô tả sản phẩm..."></textarea>
+                            <!-- <textarea v-model="product.description" class="form-control" rows="5" placeholder="Nhập mô tả sản phẩm..."></textarea> -->
+                            <div ref="editor" class="bg-white border rounded"></div>
                         </div>
                     </div>
                 </div>

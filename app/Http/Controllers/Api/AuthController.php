@@ -47,6 +47,12 @@ class AuthController extends Controller
             ], 401);
         }
 
+        if ($user->is_locked) {
+            return response()->json([
+                'message' => 'Tài khoản của bạn đã bị khóa. Vui lòng liên hệ quản trị viên.',
+            ], 403);
+        }
+
         // 4. Xóa các token cũ và tạo token mới (Sanctum)
         // LƯU Ý: Nếu bạn đang sử dụng SPA, bạn có thể muốn sử dụng `createToken` với tên thích hợp.
         // Dùng `sanctum:generate-token` nếu bạn dùng Flutter/React Native.
@@ -88,6 +94,7 @@ class AuthController extends Controller
             'name' => 'required',
             'email' => 'required|email|unique:users,email,' . $user_id . ',user_id',
             'role' => 'required|in:admin,user',
+            'is_locked' => 'nullable|boolean',
         ], [
             'email.unique' => 'Email đã được sử dụng.',
         ]);
@@ -99,6 +106,7 @@ class AuthController extends Controller
             'name' => $request->name,
             'email' => $request->email,
             'role' => $request->role,
+            'is_locked' => $request->has('is_locked') ? $request->is_locked : $user->is_locked,
         ]);
 
         return response()->json(['message' => 'Cập nhật thành công!', $user], 200);

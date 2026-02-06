@@ -12,22 +12,27 @@ use App\Models\ProductVariant;
 use App\Models\ProductImage;
 use Illuminate\Support\Facades\Storage;
 use Exception;
-use Illuminate\Container\Attributes\Log;
+use Illuminate\Support\Facades\Log;
 
 class ProductController extends Controller
 {
-    public function getAllProduct()
+    public function getNewProduct()
     {
-        $query = Product::with(['variant', 'image', 'categories']);
-        response()->json($query->get());
+        $query = Product::query()->with(['variant', 'image', 'categories'])
+            ->orderBy('created_at', 'desc')
+            ->limit(8)
+            ->get();
+        return response()->json($query);
     }
+
     public function index(Request $request)
     {
         $query = Product::query()
             ->with([
                 'variant',
                 'image',
-                'categories'
+                'categories',
+                'brand'
             ]);
 
         /* =========================
@@ -42,12 +47,17 @@ class ProductController extends Controller
                 $q->whereIn('categories.category_id', $allCategoryIds);
             });
         }
+
+        // 2️⃣ LỌC THEO THƯƠNG HIỆU
+        if ($request->filled('brand_id')) {
+            $query->where('brand_id', $request->brand_id);
+        }
         if ($request->filled('keyword')) {
             $keyword = trim($request->keyword);
 
             $query->where('name', 'LIKE', "%{$keyword}%");
         }
-        switch ($request->get('sort')) {
+        switch ($request->get('filter')) {
             case 'price_asc':
                 $query->orderBy('price', 'asc');
                 break;
@@ -56,15 +66,15 @@ class ProductController extends Controller
                 $query->orderBy('price', 'desc');
                 break;
 
-            case 'oldest':
-                $query->orderBy('created_at', 'asc');
+            case 'latest':
+                $query->orderBy('created_at', 'desc')->limit(10);
                 break;
 
             default: // newest
                 $query->orderBy('created_at', 'desc');
                 break;
         }
-        $products = $query->paginate(12)->withQueryString();
+        $products = $query->paginate(24)->withQueryString();
 
         return response()->json([
             'status'  => true,
@@ -76,7 +86,7 @@ class ProductController extends Controller
     public function show($id)
     {
 
-        return Product::with(['variant', 'image', 'categories'])->findOrFail($id);
+        return Product::with(['variant', 'image', 'categories', 'brand'])->findOrFail($id);
     }
 
     public function store(Request $request)
@@ -87,6 +97,7 @@ class ProductController extends Controller
             'description' => 'nullable',
             'price' => 'required|numeric|min:0',
             'category_id' => 'required|integer|exists:categories,category_id',
+            'brand_id' => 'nullable|integer|exists:brands,brand_id',
 
             // Frontend đã gửi variants dạng JSON string
             'variants' => 'required|json',
@@ -107,6 +118,7 @@ class ProductController extends Controller
                 'description' => $request->description,
                 'price' => $request->price,
                 'category_id' => $request->category_id,
+                'brand_id' => $request->brand_id,
             ]);
 
             // 3. Xử lý Variants & Images
@@ -203,6 +215,7 @@ class ProductController extends Controller
             'description' => 'nullable',
             'price' => 'required|numeric|min:0',
             'category_id' => 'required|integer|exists:categories,category_id',
+            'brand_id' => 'nullable|integer|exists:brands,brand_id',
 
             // Variants JSON string bắt buộc phải có
             'variants' => 'required|json',
@@ -224,6 +237,7 @@ class ProductController extends Controller
                 'description' => $request->description,
                 'price' => $request->price,
                 'category_id' => $request->category_id,
+                'brand_id' => $request->brand_id,
             ]);
 
             // 3. Xử lý Variants & Images

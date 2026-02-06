@@ -22,6 +22,7 @@ class User extends Authenticatable
         'password',
         'role',
         'sex',
+        'is_locked',
         'email_verified_at' // ✅ cho social login
     ];
 

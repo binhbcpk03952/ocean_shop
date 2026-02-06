@@ -254,9 +254,9 @@ watch(productsSelected, (newSelected) => {
                                 Chọn tất cả ({{ carts.cart_item ? carts.cart_item.length : 0 }} sản phẩm)
                             </label>
                         </div>
-                        <button class="btn btn-sm btn-outline-danger border-0">
+                        <!-- <button class="btn btn-sm btn-outline-danger border-0">
                             <i class="bi bi-trash me-1"></i> Xóa mục đã chọn
-                        </button>
+                        </button> -->
                     </div>
                     <div class="card-body">
                         <div v-if="carts.cart_item && carts.cart_item.length > 0" class="cart-list">
@@ -271,7 +271,7 @@ watch(productsSelected, (newSelected) => {
                                         alt="product-image" class="img-fluid rounded">
                                 </div>
                                 <div class="col-4">
-                                    <h6 class="mb-1">{{ cart.variant.product.name }}</h6>
+                                    <router-link :to="'products/' + cart.variant.product_id" class="mb-1 d-block text-decoration-none text-dark">{{ cart.variant.product.name }}</router-link>
                                     <small class="text-muted mb-1">
                                         Phân loại:
                                         <span class="border px-2 py-1 rounded-5" style="cursor: pointer;"

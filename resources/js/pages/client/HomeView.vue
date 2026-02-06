@@ -12,9 +12,9 @@ const posts = ref([])
 //  Lấy danh sách product
 const handleFetchProducts = async () => {
     try {
-        const response = await api.get('/products')
+        const response = await api.get('/products_new')
         if (response.status === 200) {
-            products.value = response.data.data.data || response.data || [];
+            products.value =  response.data || [];
         } else {
             alert('Có lỗi xảy ra, vui lòng thử lại.')
         }
@@ -50,8 +50,8 @@ onMounted(() => {
   <div class="container product-list mb-5">
 
     <div class="text-center mt-5 content">
-      <h2>ÁO KHOÁC GIÓ ĐA NĂNG</h2>
-      <p>Trượt nước - Cản gió - Giữ ấm - Phù hợp với thời tiết!!</p>
+      <h2>SẢN PHẨM MỚI NHẤT</h2>
+      <p>Đón đầu xu hướng - Bứt phá phong cách.</p>
     </div>
 
     <div class="row">
@@ -69,7 +69,7 @@ onMounted(() => {
     </div>
     <div class="row mt-5">
                   <div class="col-md-3" v-if="posts" v-for="post in posts" :key="post.post_id">
-                <router-link class="post-item text-decoration-none text-dark" :to="'/blog/' + post.post_id">
+                <router-link class="post-item text-decoration-none text-dark" :to="'/blog/' + post.slug">
                     <div class="post-img">
                         <img :src="'../../../../storage/' + post.thumbnail_path" alt="images" class="w-100">
                     </div>

@@ -39,27 +39,27 @@ onMounted(async () => {
 </script>
 <template>
     <div class="container">
-        <h1>Tin tức</h1>
+        <h1 class="my-3">Tin tức</h1>
         <div class="text-center">
-            <div class="search">
+            <!-- <div class="search">
                 <input type="text" class="py-2 bg-white border-1 rounded-5 ps-2 ouline-none" placeholder="Tìm kiếm...">
                 <button type="submit" class="py-1 bg-white border-0">
                     <i class="bi bi-search"></i>
                 </button>
-            </div>
+            </div> -->
         </div>
-        <div class="row">
+        <!-- <div class="row">
             <div class="col md-6">
                 <div class="post-new">
                     <h2>Tin mới nhất</h2>
                     <div class="post-info">
                         <!-- <img src="" alt=""> -->
-                    </div>
+                    <!-- </div>
                 </div>
             </div>
-            <div class="colmd-6"></div>
+            <div class="colmd-6"></div> -->
 
-        </div>
+        <!-- </div> -->
         <div class="row">
             <div class="col-md-4" v-if="posts" v-for="post in posts" :key="post.post_id">
                 <router-link class="post-item text-decoration-none text-dark" :to="'/blog/' + post.slug">

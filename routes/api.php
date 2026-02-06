@@ -19,6 +19,8 @@ use App\Http\Controllers\Api\ReviewController;
 use App\Http\Controllers\Api\PromotionController;
 use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\ReportController;
+use App\Http\Controllers\Api\BrandController;
+use App\Http\Controllers\Api\MomoController;
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -47,9 +49,11 @@ Route::post('/chat-ai', [GeminiAIController::class, 'chat']);
 Route::get('/products',          [ProductController::class, 'index']);
 Route::get('/products/{id}',     [ProductController::class, 'show']);
 Route::get('/products/{id}/related', [ProductController::class, 'relatedProducts']);
+Route::get('/products_new',      [ProductController::class, 'getNewProduct']);
 
 // 🔹 BANNERS PUBLIC ROUTES
 Route::get('/banners', [BannerController::class, 'index']);
+Route::get('/brands', [BrandController::class, 'index']);
 
 Route::get('posts', [PostController::class, 'index']);
 Route::get('posts/{slug}', [PostController::class, 'show']);
@@ -72,6 +76,11 @@ Route::middleware('auth:sanctum')->group(function () {
     // Categories
     Route::post('/categories',       [CategoryController::class, 'store']);
     Route::delete('/categories/{id}', [CategoryController::class, 'destroy']);
+
+    // Brands
+    Route::post('/brands',       [BrandController::class, 'store']);
+    Route::put('/brands/{id}',   [BrandController::class, 'update']);
+    Route::delete('/brands/{id}', [BrandController::class, 'destroy']);
 
 
     // Products
@@ -118,6 +127,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/vnpay_payment', [VNPayController::class, 'createPayment']);
     Route::get('/vnpay/return', [VNPayController::class, 'vnpayReturn']);
 
+    Route::post('/momo_payment', [MomoController::class, 'createPayment']);
+    Route::get('/momo/return', [MomoController::class, 'momoReturn']);
+
     Route::post('/logout', [AuthController::class, 'logout']);
     // Danh gia san pham
 
@@ -133,8 +145,6 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // thong ke
     Route::get('/reports', [ReportController::class, 'index']);
-
-
 }); //// ====== ////
 
 Route::get('/products/{id}/reviews', [ReviewController::class, 'getByProduct']);

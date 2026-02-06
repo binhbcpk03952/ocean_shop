@@ -30,7 +30,7 @@ const emit = defineEmits(['edit', 'delete'])
             {{ props.cat.name }}
         </td>
         <td>
-            <img :src="'../../../../storage/' + props.cat.image" alt="image" width="50" class="rounded">
+            <img :src=" props.cat.image ? '../../../../storage/' + props.cat.image : '/images/logo_ocean_mini.png'" alt="image" width="50" class="rounded">
         </td>
 
         <td>

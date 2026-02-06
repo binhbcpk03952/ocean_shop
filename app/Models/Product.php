@@ -8,7 +8,7 @@ class Product extends Model
 {
     protected $table = 'products';
     protected $primaryKey = 'product_id';
-    protected $fillable = ['name', 'description', 'price', 'category_id'];
+    protected $fillable = ['name', 'description', 'price', 'category_id', 'brand_id'];
 
     public function categories()
     {
@@ -26,5 +26,10 @@ class Product extends Model
     public function favorite()
     {
         return $this->hasMany(Favorite::class, 'product_id', 'product_id');
+    }
+
+    public function brand()
+    {
+        return $this->belongsTo(Brand::class, 'brand_id', 'brand_id');
     }
 }
